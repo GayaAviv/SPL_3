@@ -1,9 +1,10 @@
 package bgu.spl.net.impl.stomp;
 import bgu.spl.net.api.MessagingProtocol;
+import bgu.spl.net.api.StompMessagingProtocol;
 import bgu.spl.net.srv.Connections;
 
 
-public class StompProtocol implements MessagingProtocol<String> {
+public class StompProtocol implements StompMessagingProtocol<T> {
 
     private boolean shouldTerminate = false;
 
@@ -11,7 +12,7 @@ public class StompProtocol implements MessagingProtocol<String> {
 
     }
     
-    
+
     public T process(T msg){
 
     }
