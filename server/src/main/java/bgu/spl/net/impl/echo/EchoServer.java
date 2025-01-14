@@ -9,7 +9,7 @@ public class EchoServer {
         // you can use any server... 
         Server.threadPerClient(
                 7777, //port
-                () -> new EchoProtocol(), //protocol factory
+                () -> new EchoProtocol<String>(), //protocol factory
                 LineMessageEncoderDecoder::new //message encoder decoder factory
         ).serve();
 

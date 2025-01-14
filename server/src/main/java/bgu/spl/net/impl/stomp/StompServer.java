@@ -1,7 +1,4 @@
 package bgu.spl.net.impl.stomp;
-
-import bgu.spl.net.impl.echo.EchoProtocol;
-import bgu.spl.net.impl.echo.LineMessageEncoderDecoder;
 import bgu.spl.net.srv.Server;
 
 public class StompServer {
@@ -19,7 +16,7 @@ public class StompServer {
             case "tpc":
                 Server.threadPerClient(
                         portId, //port
-                        () -> new StompProtocol(), //protocol factory
+                        () -> new StompProtocol<Frame>(), //protocol factory
                         FrameMessageEncoderDecoder::new //message encoder decoder factory
                 ).serve();
                 break;
@@ -28,7 +25,7 @@ public class StompServer {
                 Server.reactor(
                         Runtime.getRuntime().availableProcessors(), //Threads num
                         portId, //port
-                        () -> new StompProtocol(), //protocol factory
+                        () -> new StompProtocol<Frame>(), //protocol factory
                         FrameMessageEncoderDecoder::new //message encoder decoder factory
                 ).serve();
             break;
