@@ -20,7 +20,7 @@ public class StompServer {
                 Server.threadPerClient(
                         portId, //port
                         () -> new StompProtocol(), //protocol factory
-                        LineMessageEncoderDecoder::new //message encoder decoder factory
+                        FrameMessageEncoderDecoder::new //message encoder decoder factory
                 ).serve();
                 break;
 
@@ -29,7 +29,7 @@ public class StompServer {
                         Runtime.getRuntime().availableProcessors(), //Threads num
                         portId, //port
                         () -> new StompProtocol(), //protocol factory
-                    LineMessageEncoderDecoder::new //message encoder decoder factory
+                        FrameMessageEncoderDecoder::new //message encoder decoder factory
                 ).serve();
             break;
         }

@@ -2,7 +2,7 @@ package bgu.spl.net.impl.stomp;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 
-public class FrameMessageEncoderDecoder implements MessageEncoderDecoder<Frame> {
+public class FrameMessageEncoderDecoder<T> implements MessageEncoderDecoder<Frame> {
 
 
     public Frame decodeNextByte(byte nextByte){

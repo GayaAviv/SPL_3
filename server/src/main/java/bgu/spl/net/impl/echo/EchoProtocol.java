@@ -5,7 +5,7 @@ import bgu.spl.net.srv.Connections;
 
 import java.time.LocalDateTime;
 
-public class EchoProtocol implements MessagingProtocol<String> {
+public class EchoProtocol<T> implements MessagingProtocol<String> {
 
     private boolean shouldTerminate = false;
 
@@ -24,6 +24,11 @@ public class EchoProtocol implements MessagingProtocol<String> {
     @Override
     public boolean shouldTerminate() {
         return shouldTerminate;
+    }
+
+    @Override
+    public void start(int connectionId, Connections<String> connections){
+        
     }
 
 }

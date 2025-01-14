@@ -1,22 +1,27 @@
 package bgu.spl.net.impl.stomp;
-import bgu.spl.net.api.MessagingProtocol;
 import bgu.spl.net.api.StompMessagingProtocol;
 import bgu.spl.net.srv.Connections;
 
 
-public class StompProtocol implements StompMessagingProtocol<T> {
+public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
 
+    //Fileds
     private boolean shouldTerminate = false;
 
-    public void start(int connectionId, Connections<T> connections){
+
+    //Methods
+
+    @Override
+    public void start(int connectionId, Connections<Frame> connections){
 
     }
     
-
-    public T process(T msg){
+    @Override
+    public void process(Frame msg){
 
     }
- 
+
+    @Override
     public boolean shouldTerminate(){
         return shouldTerminate;
     }
