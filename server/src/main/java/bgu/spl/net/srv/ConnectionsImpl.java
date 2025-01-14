@@ -17,7 +17,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
     
     /**
-    * This function sends a message to a specific client.
+    * Sends a message T to client represented by the given connectionId.
     * @return True if the message was sent successfully.
      */
     @Override
@@ -31,7 +31,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     /**
-    * This function sends a message to all of the clients in the channel.
+    * Sends a message T to clients subscribed to channel.
      */
     @Override
     public void send(String channel, T msg){ 
@@ -43,6 +43,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
         }
     }
 
+
+    /**
+    * Removes an active client connectionId from the map.
+     */
     @Override
     public void disconnect(int connectionId){
         connectionHandlers.remove(connectionId); //Remove from the clients list.
@@ -53,6 +57,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     }
 
-    
+
 
 }
