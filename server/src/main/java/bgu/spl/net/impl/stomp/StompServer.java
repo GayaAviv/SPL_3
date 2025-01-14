@@ -10,7 +10,7 @@ public class StompServer {
         }
 
         String pattern = args[1].toLowerCase();
-        int portId = Integer.parseInt(args[1]);
+        int portId = Integer.parseInt(args[0]);
 
         switch (pattern) {
             case "tpc":
