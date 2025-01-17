@@ -144,3 +144,11 @@ names_and_events parseEventsFile(std::string json_path)
 
     return events_and_names;
 }
+
+void split_str(const std::string& str, char delimiter, std::vector<std::string>& result) {
+    std::stringstream ss(str);
+    std::string item;
+    while (std::getline(ss, item, delimiter)) {
+        result.push_back(item);
+    }
+}
