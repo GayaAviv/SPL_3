@@ -16,10 +16,16 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     private BufferedOutputStream out;
     private volatile boolean connected = true;
 
-    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol) {
+    private Connections<T> connections;
+    private int connectionID;
+
+    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol,Connections<T> connections, int connectionID) {
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
+
+        this.connections = connections;
+        this.connectionID = connectionID;
     }
 
     @Override
@@ -30,14 +36,15 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             in = new BufferedInputStream(sock.getInputStream());
             out = new BufferedOutputStream(sock.getOutputStream());
 
+            protocol.start(connectionID, connections); //Init Stomp protocol TODO לבדוק אם זה בסדר שפה 
+
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 T nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
-                   protocol.process(nextMessage);
-                
-                    }
+                    protocol.process(nextMessage);
                 }
-            } 
+            }
+        } 
         catch (IOException ex) {
             ex.printStackTrace();
         }
