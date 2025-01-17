@@ -4,7 +4,6 @@ import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.MessagingProtocol;
 import java.io.Closeable;
 import java.util.function.Supplier;
-import bgu.spl.net.api.StompMessagingProtocol;
 
 public interface Server<T> extends Closeable {
 

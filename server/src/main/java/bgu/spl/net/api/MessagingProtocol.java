@@ -8,9 +8,9 @@ public interface MessagingProtocol<T> {
     /**
      * process the given message 
      * @param msg the received message
-     * @return the response to send or null if no response is expected by the client
+     * Handle the msg property without return
      */
-    T process(T msg);
+    void process(T msg);
  
     /**
      * @return true if the connection should be terminated
