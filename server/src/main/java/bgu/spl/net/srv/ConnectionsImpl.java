@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class ConnectionsImpl<T> implements Connections<T> {
 
-    private Map<Integer, ConnectionHandler<T>> connectionHandlers; //The clients
+    private Map<Integer, ConnectionHandler<T>> connectionHandlers; //The clients with connection
     private Map<String, List<Integer>> topicSubscribers; //The topics with a list of clients that are registered to them.
 
     public ConnectionsImpl(){
