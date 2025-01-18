@@ -14,6 +14,8 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
     private int connectionId;
     private ConnectionsImpl<Frame> connections;
 
+    private int msgID;
+
     //Methods
 
     /**
@@ -25,6 +27,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
 
         this.connectionId = connectionId;
         this.connections = (ConnectionsImpl<Frame>) connections;
+        msgID = 0;
     }
             
             
@@ -124,19 +127,52 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
     }
 
     private void handleDisconnect(Frame msg) {
-        
+
+        Map<String, String> headers = msg.getHeaders();
+        String receiptId = headers.get("receipt");
+
+        connections.disconnect(connectionId);
+        sendReceiptFrame(receiptId);
     }
 
     private void handleSend(Frame msg) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'handleConnect'");
+        Map<String, String> headers = msg.getHeaders();
+        String topic = headers.get("destination");
+
+        int subscribeID = connections.isSubscribe(topic, connectionId);
+        if(subscribeID != -1){
+            sendMessageFrame(msg, subscribeID); 
+        }
+        else{
+            sendErrorFrame(msg, "You can't send a message to this topic, you need to subscribe first!");
+        }
     }
 
-    //FramSend functions
 
-    private void sendErrorFrame(Frame msg, String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'sendErrorFrame'");
+
+    //FrameSend functions
+
+    private void sendErrorFrame(Frame msg, String errorMsg) {
+
+        Map<String, String> headers = msg.getHeaders();
+        String receipt = headers.get("receipt");
+
+        //Build the frame body
+        StringBuilder body = new StringBuilder(); 
+        body.append("The Message:\n");
+        body.append("-----\n");
+        body.append(msg.toString()).append("\n");
+        body.append("-----\n");
+
+        //Build the headers
+        HashMap<String,String> headerHashMap =  new HashMap<String,String>();
+        if(receipt != null){
+            headerHashMap.put("receipt-id", receipt);
+        }
+        headerHashMap.put("message", errorMsg);
+
+        Frame errorFrame = new Frame("ERROR",headerHashMap, body.toString());
+        connections.send(connectionId, errorFrame);
     }
 
     private void sendConnectedFrame(String version) {
@@ -151,6 +187,26 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         headerHashMap.put("receipt-id", receiptId);
         Frame receiptFrame = new Frame("RECEIPT",headerHashMap,"");
         connections.send(connectionId, receiptFrame);
+    }
+
+    private void sendMessageFrame(Frame msg, Integer subscribeID) {
+
+        Map<String, String> headers = msg.getHeaders();
+        String topic = headers.get("destination");
+        String body = msg.getBody();
+        String subscriptionId = subscribeID.toString();
+
+        Integer messageIdInt = msgID++;
+        String messageIdString = messageIdInt.toString();
+
+        HashMap<String,String> headerHashMap =  new HashMap<String,String>();
+        headerHashMap.put("subscription", subscriptionId);
+        headerHashMap.put("message-id", messageIdString);
+        headerHashMap.put("destination", topic);
+
+        Frame msgFrame = new Frame("MESSAGE",headerHashMap,body);
+        connections.send(topic, msgFrame);
+
     }
 
 

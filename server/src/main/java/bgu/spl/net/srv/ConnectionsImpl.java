@@ -147,7 +147,15 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
         return found;
     }
-        
+       
+    public int isSubscribe(String topic, int connectionId) {
+        List<Subscriber> subscribers = topicSubscribers.get(topic);
+        for (Subscriber s : subscribers){
+            if(s.getConnectionId() == connectionId)
+                return s.getSubscribeId();
+        }
+        return -1;
+    }
 
     public int getNextID(){
         int output = 0;
@@ -176,5 +184,4 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public List<String> getActiveUsers() {
        return activeUsers;
     }
-
 }
