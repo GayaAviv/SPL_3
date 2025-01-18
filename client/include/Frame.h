@@ -1,5 +1,4 @@
-#ifndef FRAME_H
-#define FRAME_H
+#pragma once
 
 #include <string>
 #include <unordered_map>
@@ -33,4 +32,3 @@ public:
     static Frame fromString(const std::string& frameString);
 };
 
-#endif // FRAME_H

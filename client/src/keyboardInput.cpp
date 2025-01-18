@@ -20,11 +20,7 @@ Frame processInput(const std::string& input, StompProtocol protocol){
         restOfInput = restOfInput.substr(1);
     }
 
-    if (command == "login") { // If the command starts with login
-            std::cout << "Processing login command...\n";
-            return processLogin(restOfInput);
-
-        } else if (command == "join") { // If the command starts with join
+    if (command == "join") { // If the command starts with join
             std::cout << "Processing join command...\n";
             return processJoin(restOfInput, protocol);
 
@@ -47,16 +43,37 @@ Frame processInput(const std::string& input, StompProtocol protocol){
 
 }
 
-Frame processLogin(const std::string& loginInput){
+Frame processLogin(const std::string& loginInput, ConnectionHandler*& connectionHandler){
 
     // Split the input into components: {host:port}, {username}, {password}
     size_t firstSpace = loginInput.find(' ');
     size_t secondSpace = loginInput.find(' ', firstSpace + 1);
 
+    std::string hostPort = loginInput.substr(0, firstSpace);
     std::string username = loginInput.substr(firstSpace + 1, secondSpace - firstSpace - 1);
     std::string password = loginInput.substr(secondSpace + 1);
 
-    // Create a CONNECT frame
+    // Extract host and port
+    size_t colonPos = hostPort.find(':');
+    std::string host = hostPort.substr(0, colonPos);
+    short port = std::stoi(hostPort.substr(colonPos + 1));
+
+    // Check if already connected
+    if (connectionHandler != nullptr) {
+        std::cerr << "The client is already logged in, log out before trying again" << std::endl;
+        return Frame(); // Return an empty frame
+    }
+
+    // Create a new ConnectionHandler
+    connectionHandler = new ConnectionHandler(host, port);
+    if (!connectionHandler->connect()) {
+        std::cerr << "Could not connect to server" << std::endl;
+        delete connectionHandler;
+        connectionHandler = nullptr;
+        return Frame(); // Return an empty frame
+    }
+
+    // If connection is successful, create a CONNECT frame
     Frame frame("CONNECT", {{"accept-version", "1.2"},
                              {"host", "stomp.cs.bgu.ac.il"},
                              {"login", username},
@@ -92,7 +109,7 @@ Frame processSummary(const std::string& summaryInput, StompProtocol protocol){
 }
 Frame processLogout(const std::string& logoutInput, StompProtocol protocol){
     int receipt = protocol.getNextReceipt();
-    protocol.disconnect();
+    protocol.setDisconnectReceipt( receipt);
     Frame frame("DISCONNECT", {{"receipt" , std::to_string(receipt)}},
                               "");
     return frame;
