@@ -172,7 +172,8 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         headerHashMap.put("message", errorMsg);
 
         Frame errorFrame = new Frame("ERROR",headerHashMap, body.toString());
-        connections.send(connectionId, errorFrame);
+        if(connections.send(connectionId, errorFrame))
+            connections.disconnect(connectionId);
     }
 
     private void sendConnectedFrame(String version) {
