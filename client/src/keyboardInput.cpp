@@ -6,9 +6,9 @@
 #include <iostream>
 #include <sstream>
 
-Frame processInput(const std::string& input){
+Frame processInput(const std::string& input, StompProtocol protocol){
 
-    StompProtocol protocol = StompProtocol();
+    
 
     std::istringstream iss(input);
     std::string command;
@@ -30,15 +30,19 @@ Frame processInput(const std::string& input){
 
         } else if (command == "exit") { // If the command starts with exit
             std::cout << "Processing exit command...\n";
-            return processExit(restOfInput);
+            return processExit(restOfInput, protocol);
 
         } else if (command == "report") { // If the command starts with report
             std::cout << "Processing report command...\n";
-            return processReport(restOfInput);
+            return processReport(restOfInput, protocol);
+
+        } else if (command == "summary") { // If the command starts with report
+            std::cout << "Processing report command...\n";
+            return processSummary(restOfInput, protocol);
 
         } else if (command == "logout") { // If the command starts with logout
             std::cout << "Processing logout command...\n";
-            return processLogout(restOfInput);
+            return processLogout(restOfInput, protocol);
         }
 
 }
@@ -62,22 +66,34 @@ Frame processLogin(const std::string& loginInput){
 }
 
 Frame processJoin(const std::string& joinInput, StompProtocol protocol){
+    int id = protocol.getNextSubscriptionID();
     Frame frame("SUBSCRIBE", {{"destination" , "/"+ joinInput},
-                              {"id", std::to_string(protocol.getNextSubscriptionID())},
+                              {"id", std::to_string(id)},
                               {"receipt" , std::to_string(protocol.getNextReceipt())}},
                               "");
+    protocol.addSubscribe(joinInput, id);
     return frame;
 }
 
-Frame processExit(const std::string& loginInput){
+Frame processExit(const std::string& exitInput, StompProtocol protocol){
+    int id = protocol.getSubscriptionsId(exitInput);
+    Frame frame("UNSUBSCRIBE", {{"id", std::to_string(id)},
+                              {"receipt" , std::to_string(protocol.getNextReceipt())}},
+                              "");
+    protocol.removeSubscription(exitInput);
+    return frame;
 
 }
-Frame processReport(const std::string& loginInput){
+Frame processReport(const std::string& reportInput, StompProtocol protocol){
 
 }
-Frame processSummary(const std::string& loginInput){
+Frame processSummary(const std::string& summaryInput, StompProtocol protocol){
 
 }
-Frame processLogout(const std::string& loginInput){
-
+Frame processLogout(const std::string& logoutInput, StompProtocol protocol){
+    int receipt = protocol.getNextReceipt();
+    protocol.disconnect();
+    Frame frame("DISCONNECT", {{"receipt" , std::to_string(receipt)}},
+                              "");
+    return frame;
 }

@@ -1,8 +1,10 @@
 #include "../include/keyboardInput.h"
 #include <iostream>
+#include "../include/StompProtocol.h"
 
 int main(int argc, char *argv[]) {
-	
+
+    StompProtocol protocol = StompProtocol();
 	keyboardInput keyboardInput;
     std::string userInput;
 
@@ -13,11 +15,11 @@ int main(int argc, char *argv[]) {
         std::getline(std::cin, userInput);
 
         if (userInput == "logout") {
-            keyboardInput.processInput(userInput);
+            keyboardInput.processInput(userInput, protocol);
             break;
         }
 
-        keyboardInput.processInput(userInput);
+        keyboardInput.processInput(userInput, protocol);
     }
 	return 0;
 }
