@@ -55,7 +55,7 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
                 try {
                     protocol.start(connectionID, connections); //Init Stomp protocol TODO לבדוק אם זה בסדר שפה
                     connections.addConnectionHandler(connectionID, this);
-                    
+                
                     while (buf.hasRemaining()) {
                         T nextMessage = encdec.decodeNextByte(buf.get());
                         if (nextMessage != null) {

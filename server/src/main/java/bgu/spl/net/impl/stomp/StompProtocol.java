@@ -12,7 +12,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
     //Fileds
     private boolean shouldTerminate = false;
     private int connectionId;
-    private Connections<Frame> connections;
+    private ConnectionsImpl<Frame> connections;
 
     //Methods
 
@@ -24,7 +24,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
     public void start(int connectionId, Connections<Frame> connections){
 
         this.connectionId = connectionId;
-        this.connections = connections;
+        this.connections = (ConnectionsImpl<Frame>) connections;
     }
             
             
@@ -66,54 +66,65 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
 
     private void handleConnect(Frame msg) {
 
-        ConnectionsImpl<Frame> connectionsImpl = (ConnectionsImpl<Frame>) connections;
-
         Map<String, String> headers = msg.getHeaders();
-
         String version = headers.get("accept-version");
         String username = headers.get("login");
         String password = headers.get("passcode");
 
-        if(!connectionsImpl.getActiveClientUser().containsKey(connectionId)){ //In case the client is already logged in with the same user or another
-            sendErrorFrame(msg,"The client is already logged in, log out before trying again");
-        }
-
-        else if(!connectionsImpl.getActiveUsers().contains(username)){ //In case the user is already logged in from another client
+        if(!connections.getActiveUsers().contains(username)){ //In case the user is already logged in from another client
             sendErrorFrame(msg,"User already logged in");
         }
 
-        else if (connectionsImpl.getUsers().containsKey(username)){ //In case the userName alredy exist
-            String realPassword = connectionsImpl.getUsers().get(username);
+        else if (connections.getUsers().containsKey(username)){ //In case the userName alredy exist
+            String realPassword = connections.getUsers().get(username);
             if (!realPassword.equals(password)){  //Check password
                 sendErrorFrame(msg,"Wrong password");
             }
             else{ //Connection was successful
-                connectionsImpl.addConnectionUser(connectionId,username);
+                connections.addConnectionUser(connectionId,username);
                 sendConnectedFrame(version);
             }
         }
 
         else{ //In case the user is new and the Connection was successful
-            connectionsImpl.addConnectionUser(connectionId,username);
-            connectionsImpl.getUsers().put(username,password);
+            connections.addConnectionUser(connectionId,username);
+            connections.getUsers().put(username,password);
             sendConnectedFrame(version);
         }        
             
     } 
 
     private void handleSubscribe(Frame msg) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'handleConnect'");
-    }
+        
+        Map<String, String> headers = msg.getHeaders();
+        String topic = headers.get("destination");
+        String subscribeId = headers.get("id");
+        String receiptId = headers.get("receipt");
 
+        boolean success = connections.addSubscriber(topic, connectionId, subscribeId);
+        if(success){
+            sendReceiptFrame(receiptId);
+        }
+        else{
+            sendErrorFrame(msg,"Subscribe unsuccessful");
+        }
+    }
+               
     private void handleUnsubscribe(Frame msg) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'handleConnect'");
+
+        Map<String, String> headers = msg.getHeaders();
+        String subscribeId = headers.get("id");
+        String receiptId = headers.get("receipt");
+
+        if(connections.removeSubscriber(connectionId, subscribeId)){
+            sendReceiptFrame(receiptId);
+        }
+        
+        //TODO : לבדוק אם צריך לשלוח ארור אם לא עשה
     }
 
     private void handleDisconnect(Frame msg) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'handleConnect'");
+        
     }
 
     private void handleSend(Frame msg) {
@@ -134,6 +145,15 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         Frame connectedFrame = new Frame("CONNECTED",headerHashMap,"");
         connections.send(connectionId, connectedFrame);
     }
+
+    private void sendReceiptFrame(String receiptId) {
+        HashMap<String,String> headerHashMap =  new HashMap<String,String>();
+        headerHashMap.put("receipt-id", receiptId);
+        Frame receiptFrame = new Frame("RECEIPT",headerHashMap,"");
+        connections.send(connectionId, receiptFrame);
+    }
+
+
 
 
 }

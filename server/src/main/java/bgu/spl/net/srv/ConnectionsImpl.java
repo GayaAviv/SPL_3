@@ -7,10 +7,13 @@ import java.util.Map;
 import java.util.Queue;
 
 
+import bgu.spl.net.impl.stomp.Subscriber;
+
+
 public class ConnectionsImpl<T> implements Connections<T> {
 
     private Map<Integer, ConnectionHandler<T>> connectionHandlers; //The client IDs with their respective connection handlers
-    private Map<String, List<Integer>> topicSubscribers; //The topics with a list of clients that are registered to them
+    private Map<String, List<Subscriber>> topicSubscribers; //The topics with a list of subscribers
 
     private Map<Integer,String> activeClientUser; //The currently logged-in user for each clientId
     private List<String> activeUsers; //The currently logged-in users (across all clients)
@@ -49,10 +52,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
      */
     @Override
     public void send(String channel, T msg){ 
-        List<Integer> subscribers = topicSubscribers.get(channel);
+        List<Subscriber> subscribers = topicSubscribers.get(channel);
         if (subscribers != null) {
-            for (int connectionId : subscribers) {
-                send(connectionId, msg);  //Use the send() method according to the specific client.
+            for (Subscriber subscriber : subscribers) {
+                int connectionId = subscriber.getConnectionId();
+                send(connectionId, msg);  // Use the send() method for each client (connectionId).
             }
         }
     }
@@ -65,11 +69,18 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public void disconnect(int connectionId){
         connectionHandlers.remove(connectionId); //Remove from the client-connectionId data.
 
-        for (List<Integer> subscribers : topicSubscribers.values()) { // Remove the client from all the channels they are subscribed to.
-            subscribers.remove(Integer.valueOf(connectionId));
+        for (List<Subscriber> subscribers : topicSubscribers.values()) { // Remove the client from all the channels they are subscribed to.
+            for (Subscriber s : subscribers) {
+                if(s.getConnectionId() == connectionId){
+                    subscribers.remove(s);
+                    break;
+                }
+            }
         }
 
-        activeClientUser.remove(connectionId); //Remove from connectionId-userName data.
+        String userName = activeClientUser.remove(connectionId); //Remove from connectionId-userName data.
+        activeUsers.remove(userName); //Remove from the list of active users
+
         availableId.add(connectionId); //Save the connectionId for the next connection
     }
 
@@ -83,6 +94,60 @@ public class ConnectionsImpl<T> implements Connections<T> {
         connectionHandlers.put(connectionID, connectionHandler);
     }
 
+    public boolean addSubscriber(String topic, int connectionId, String subscriptionId) {
+        int subscribeID = Integer.parseInt(subscriptionId);
+
+        if(topicSubscribers.containsKey(topic)){ //In case topic already exist
+            List<Subscriber> subscribers = topicSubscribers.get(topic);
+
+            boolean canAdd = true;
+            for (Subscriber s : subscribers) {
+                if(connectionId == s.getConnectionId()){
+                    canAdd = false;
+                }
+                if(!canAdd)
+                    break;
+            }
+
+            if(canAdd){
+                Subscriber newSub = new Subscriber(connectionId, subscribeID);
+                subscribers.add(newSub);
+            }
+
+            return canAdd;
+        }
+
+        else{ //In case of new topic
+            Subscriber newSub = new Subscriber(connectionId, subscribeID);
+            List<Subscriber> topicSub = new LinkedList<>();
+            topicSub.add(newSub);
+            topicSubscribers.put(topic, topicSub);
+            return true;
+        }
+    }
+
+    
+    public boolean removeSubscriber(int connectionId, String subscriptionId) {
+        int subscribeID = Integer.parseInt(subscriptionId);
+        
+        boolean found = false;
+        for (List<Subscriber> subscribers : topicSubscribers.values()) { 
+            for (Subscriber s : subscribers) {
+                if(s.getConnectionId() == connectionId && s.getSubscribeId() == subscribeID){
+                    subscribers.remove(s);
+                    found = true;
+                    break;
+                }
+            }
+
+            if(found){
+                return found;
+            }
+        }
+
+        return found;
+    }
+        
 
     public int getNextID(){
         int output = 0;
