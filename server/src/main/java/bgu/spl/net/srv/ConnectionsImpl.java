@@ -9,18 +9,21 @@ import java.util.Queue;
 
 public class ConnectionsImpl<T> implements Connections<T> {
 
-    private Map<Integer, ConnectionHandler<T>> connectionHandlers; //The clients id with connection
+    private Map<Integer, ConnectionHandler<T>> connectionHandlers; //The client IDs with their respective connection handlers
     private Map<String, List<Integer>> topicSubscribers; //The topics with a list of clients that are registered to them
-    private Map<Integer,String> connectionPerUserName; //The current userName in the clientId
-    private Map<String,String> users; // The userNames and passwords
+
+    private Map<Integer,String> activeClientUser; //The currently logged-in user for each clientId
+    private List<String> activeUsers; //The currently logged-in users (across all clients)
+
+    private Map<String,String> users; //The usernames and their corresponding passwords
 
     private int counterConnection; //Counter for the connection Id 
-    private Queue<Integer> availableId; //For reusing the connection Id
+    private Queue<Integer> availableId; //For reusing the connection ID
 
     public ConnectionsImpl(){
         connectionHandlers = new HashMap<>(); //TODO: ?סנכרון
         topicSubscribers = new HashMap<>();
-        connectionPerUserName = new HashMap<>();
+        activeClientUser = new HashMap<>();
         users = new HashMap<>();
 
         availableId = new LinkedList<>();
@@ -66,15 +69,21 @@ public class ConnectionsImpl<T> implements Connections<T> {
             subscribers.remove(Integer.valueOf(connectionId));
         }
 
-        String userName = connectionPerUserName.remove(connectionId); //Remove from connectionId-userName data.
-        if (userName != null){
-            users.remove(userName); //Remove from users data.
-        }
-
+        activeClientUser.remove(connectionId); //Remove from connectionId-userName data.
         availableId.add(connectionId); //Save the connectionId for the next connection
     }
 
-    @Override
+    
+    public void addConnectionUser(int connectionId, String username) {
+        activeClientUser.put(connectionId, username);
+        activeUsers.add(username);
+    }
+
+    public void addConnectionHandler(int connectionID, ConnectionHandler<T> connectionHandler) {
+        connectionHandlers.put(connectionID, connectionHandler);
+    }
+
+
     public int getNextID(){
         int output = 0;
         if(!availableId.isEmpty()){
@@ -87,13 +96,20 @@ public class ConnectionsImpl<T> implements Connections<T> {
         return output;
     }
 
-    @Override
     public Map<Integer,ConnectionHandler<T>> getConnectionHandlers(){
         return connectionHandlers;
     }
 
+    public Map<String,String> getUsers(){
+        return users;
+    }
 
+    public Map<Integer,String> getActiveClientUser(){
+        return activeClientUser;
+    }
 
-
+    public List<String> getActiveUsers() {
+       return activeUsers;
+    }
 
 }
