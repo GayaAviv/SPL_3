@@ -1,24 +1,33 @@
 CFLAGS:=-c -Wall -Weffc++ -g -std=c++11 -Iinclude
 LDFLAGS:=-lboost_system -lpthread
 # TODO change the makefile for StompEMIlient
-all: EchoClient
+all: StompEMIClient
 
-EchoClient: bin/ConnectionHandler.o bin/echoClient.o
-	g++ -o bin/EchoClient bin/ConnectionHandler.o bin/echoClient.o $(LDFLAGS)
+StompEMIClient: bin/ConnectionHandler.o bin/event.o bin/Frame.o bin/EncoderDecoder.o bin/keyboardInput.o bin/StompProtocol.o bin/Threads.o bin/StompClient.o
+	g++ -o bin/StompEMIClient bin/ConnectionHandler.o bin/event.o bin/Frame.o bin/EncoderDecoder.o bin/keyboardInput.o bin/StompProtocol.o bin/Threads.o bin/StompClient.o $(LDFLAGS)
 
-StompWCIClient: bin/ConnectionHandler.o bin/StompClient.o bin/event.o
-	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o $(LDFLAGS)
-
-bin/ConnectionHandler.o: src/ConnectionHandler.cpp
+bin/ConnectionHandler.o: src/ConnectionHandler.cpp include/ConnectionHandler.h
 	g++ $(CFLAGS) -o bin/ConnectionHandler.o src/ConnectionHandler.cpp
 
-bin/echoClient.o: src/echoClient.cpp
-	g++ $(CFLAGS) -o bin/echoClient.o src/echoClient.cpp
-
-bin/event.o: src/event.cpp
+bin/event.o: src/event.cpp include/event.h
 	g++ $(CFLAGS) -o bin/event.o src/event.cpp
 
-bin/StompClient.o: src/StompClient.cpp
+bin/Frame.o: src/Frame.cpp include/Frame.h
+	g++ $(CFLAGS) -o bin/Frame.o src/Frame.cpp
+
+bin/EncoderDecoder.o: src/EncoderDecoder.cpp include/EncoderDecoder.h
+	g++ $(CFLAGS) -o bin/EncoderDecoder.o src/EncoderDecoder.cpp
+
+bin/keyboardInput.o: src/keyboardInput.cpp include/keyboardInput.h
+	g++ $(CFLAGS) -o bin/keyboardInput.o src/keyboardInput.cpp
+
+bin/StompProtocol.o: src/StompProtocol.cpp include/StompProtocol.h
+	g++ $(CFLAGS) -o bin/StompProtocol.o src/StompProtocol.cpp
+
+bin/Threads.o: src/Threads.cpp include/Threads.h
+	g++ $(CFLAGS) -o bin/Threads.o src/Threads.cpp
+
+bin/StompClient.o: src/StompClient.cpp include/ConnectionHandler.h include/event.h include/Frame.h include/EncoderDecoder.h include/keyboardInput.h include/StompProtocol.h include/Threads.h
 	g++ $(CFLAGS) -o bin/StompClient.o src/StompClient.cpp
 
 .PHONY: clean

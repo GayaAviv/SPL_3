@@ -22,6 +22,16 @@ void KeyboardThread::operator()() {
             std::string connectionDetails = userInput.substr(6); // Skip "login "
             frame = keyboardInputInstance.processLogin(connectionDetails, connectionHandler);
 
+        } else if (userInput.rfind("report", 0) == 0) {
+            std::string filePath = userInput.substr(7); // Skip "report "
+            std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
+            for(Frame f : frames){
+                if (!f.getCommand().empty()) {
+                    std::lock_guard<std::mutex> lock(queueMutex);
+                    frameQueue.push(f);
+                    queueCondition.notify_one(); // Notify the server thread
+                }
+            }
         } else if (protocol.getIsConnected()) {
             frame = keyboardInputInstance.processInput(userInput, protocol);
         }
@@ -67,7 +77,7 @@ void CommunicationThread::operator()() {
 
             // Process the decoded frame using StompProtocol
             protocol.processFrame(frame);
-            if (true) { // TODO: need to add a condition that checks if the connection needs to be closed
+            if (!protocol.getIsConnected()) { 
                 connectionHandler->close();
             }
         }

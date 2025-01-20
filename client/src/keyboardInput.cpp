@@ -7,10 +7,9 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <fstream>
 
-Frame processInput(const std::string& input, StompProtocol protocol){
-
-    
+Frame keyboardInput::processInput(const std::string& input, StompProtocol protocol){
 
     std::istringstream iss(input);
     std::string command;
@@ -30,23 +29,19 @@ Frame processInput(const std::string& input, StompProtocol protocol){
             std::cout << "Processing exit command...\n";
             return processExit(restOfInput, protocol);
 
-        } else if (command == "report") { // If the command starts with report
-            std::cout << "Processing report command...\n";
-            std::vector<Frame> frames = processReport(restOfInput, protocol);
-            return ;//TODO: send each frame
-
         } else if (command == "summary") { // If the command starts with report
-            std::cout << "Processing report command...\n";
-            return processSummary(restOfInput, protocol);
+            std::cout << "Processing summary command...\n";
+            processSummary(restOfInput, protocol);
+            return Frame();
 
         } else if (command == "logout") { // If the command starts with logout
             std::cout << "Processing logout command...\n";
             return processLogout(restOfInput, protocol);
         }
-
+    return Frame();
 }
 
-Frame processLogin(const std::string& loginInput, ConnectionHandler*& connectionHandler){
+Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandler*& connectionHandler){
 
     // Split the input into components: {host:port}, {username}, {password}
     size_t firstSpace = loginInput.find(' ');
@@ -85,26 +80,30 @@ Frame processLogin(const std::string& loginInput, ConnectionHandler*& connection
     return frame;
 }
 
-Frame processJoin(const std::string& joinInput, StompProtocol protocol){
+Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol protocol){
     int id = protocol.getNextSubscriptionID();
+    int receipt = protocol.getNextReceipt();
     Frame frame("SUBSCRIBE", {{"destination" , "/"+ joinInput},
                               {"id", std::to_string(id)},
-                              {"receipt" , std::to_string(protocol.getNextReceipt())}},
+                              {"receipt" , std::to_string(receipt)}},
                               "");
-    protocol.addSubscribe(joinInput, id);
+    protocol.setSubscriptionReceipt(joinInput, receipt);
+    
     return frame;
 }
 
-Frame processExit(const std::string& exitInput, StompProtocol protocol){
+Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol protocol){
     int id = protocol.getSubscriptionsId(exitInput);
     Frame frame("UNSUBSCRIBE", {{"id", std::to_string(id)},
                               {"receipt" , std::to_string(protocol.getNextReceipt())}},
                               "");
-    protocol.removeSubscription(exitInput);
+    protocol.setExitReceipt(exitInput, id);
+    
     return frame;
 
 }
-std::vector<Frame> processReport(const std::string& reportInput, StompProtocol protocol){
+std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, StompProtocol protocol){
+    std::cout << "Processing report command...\n";
     std::vector<Frame> frames;
     //read the file path and prase the channel name and event it contains
     names_and_events channel_events = parseEventsFile(reportInput);
@@ -112,7 +111,6 @@ std::vector<Frame> processReport(const std::string& reportInput, StompProtocol p
     std::vector<Event> events =  channel_events.events;
     //save each event on the client
     for(Event e : events){
-        protocol.addEvent(channel, e);
         std::string body = "user: " + e.getEventOwnerUser() + "\n" +
                            "city: " + e.get_city() +"\n" +
                            "event name: " + e.get_name() +"\n" +
@@ -131,13 +129,82 @@ std::vector<Frame> processReport(const std::string& reportInput, StompProtocol p
     return frames;
     
 }
-Frame processSummary(const std::string& summaryInput, StompProtocol protocol){
+
+Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtocol protocol){
+    // Split the input string to extract parameters
+    std::istringstream inputStream(summaryInput);
+    std::string command, channelName, user, fileName;
+
+    // Parse the command and parameters
+    inputStream >> command >> channelName >> user >> fileName;
+
+    // Retrieve the events for the given channel and user from the protocol
+    const std::vector<Event>& events = protocol.getMessagesForChannelAndUser(channelName, user);
+
+    // Call the function to write the summary to the file
+    writeSummary(channelName, user, fileName, events);
+
+    return Frame();
 
 }
-Frame processLogout(const std::string& logoutInput, StompProtocol protocol){
+
+Frame keyboardInput::processLogout(const std::string& logoutInput, StompProtocol protocol){
     int receipt = protocol.getNextReceipt();
     protocol.setDisconnectReceipt( receipt);
     Frame frame("DISCONNECT", {{"receipt" , std::to_string(receipt)}},
                               "");
     return frame;
+}
+
+void keyboardInput::writeSummary(const std::string& channelName, const std::string& user, const std::string& fileName, const std::vector<Event>& events) {
+    std::ofstream outFile(fileName);
+
+    if (!outFile) {
+        std::cerr << "Error: Could not open file " << fileName << " for writing.\n";
+        return;
+    }
+
+    // Filter events by channelName and user
+    std::vector<Event> filteredEvents;
+    int activeCount = 0;
+    int forcesArrivalCount = 0;
+
+    for (const Event& event : events) {
+        if (event.get_channel_name() == channelName && event.getEventOwnerUser() == user) {
+            filteredEvents.push_back(event);
+
+            // Count stats
+            if (event.get_general_information().count("active") &&
+                event.get_general_information().at("active") == "true") {
+                activeCount++;
+            }
+
+            if (event.get_general_information().count("forces_arrival_at_scene") &&
+                event.get_general_information().at("forces_arrival_at_scene") == "true") {
+                forcesArrivalCount++;
+            }
+        }
+    }
+
+    // Write header
+    outFile << "Channel " << channelName << "\n";
+    outFile << "Stats:\n";
+    outFile << "Total: " << filteredEvents.size() << "\n";
+    outFile << "active: " << activeCount << "\n";
+    outFile << "forces arrival at scene: " << forcesArrivalCount << "\n\n";
+    outFile << "Event Reports:\n";
+
+    // Write event reports
+    int reportNumber = 1;
+    for (const Event& event : filteredEvents) {
+        outFile << "Report_" << reportNumber++ << ":\n";
+        outFile << "  city: " << event.get_city() << "\n";
+        outFile << "  date time: " << std::to_string(event.get_date_time()) << "\n";
+        outFile << "  event name: " << event.get_name() << "\n";
+        outFile << "  summary: " << event.get_description() << "\n";
+        outFile << "\n";
+    }
+
+    outFile.close();
+    std::cout << "Summary successfully written to " << fileName << ".\n";
 }

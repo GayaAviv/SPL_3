@@ -16,6 +16,8 @@ private:
     int receipt;
     int disconectedReceipt;
     bool isConnected;
+    std::unordered_map<int, std::string> exitReceipts; //Map of channel -> exit receipt
+    std::unordered_map<int, std::string> subscriptionReceipts; //Map of channel -> subscription receipt
     std::unordered_map<std::string, int> subscriptionAndIDs; //Map of channel -> subscription id
     std::unordered_map<std::string, std::vector<Event>> sentMessages; // Map of channel -> messages
 
@@ -29,7 +31,7 @@ public:
     void processFrame(Frame frame);
 
     // Get the messages sent to a specific channel
-    const std::vector<std::string>& getMessagesForChannel(const std::string& channel) const;
+    const std::vector<Event> getMessagesForChannelAndUser(const std::string& channel, const std::string& user) const;
     int getNextSubscriptionID();
     int getNextReceipt();
     void addSubscribe(const std::string& topic, int id);
@@ -37,6 +39,8 @@ public:
     int getSubscriptionsId(const std::string& topic);
     void disconnect();
     void setDisconnectReceipt(int id);
+    void setExitReceipt(const std::string& topic, int receipt);
+    void setSubscriptionReceipt(const std::string& topic, int receipt);
 
     void handleConnected(Frame frame);
     void handleMessage(Frame frame);

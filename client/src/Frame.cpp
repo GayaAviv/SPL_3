@@ -2,7 +2,11 @@
 #include <sstream>
 
 // Default constructor
-Frame::Frame() = default;
+Frame::Frame() 
+    : command(""), // Initialize command as an empty string
+      headers(),   // Initialize headers as an empty map
+      body("")     // Initialize body as an empty string
+{}
 
 // Parameterized constructor
 Frame::Frame(const std::string& command, const std::unordered_map<std::string, std::string>& headers, const std::string& body)
