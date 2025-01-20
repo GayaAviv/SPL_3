@@ -17,7 +17,6 @@ public abstract class BaseServer<T> implements Server<T> {
     private ServerSocket sock;
 
     private ConnectionsImpl<T> connections;
-
     private int counterConnection; //Counter for the connection Id 
 
     public BaseServer(
@@ -46,13 +45,11 @@ public abstract class BaseServer<T> implements Server<T> {
                 Socket clientSock = serverSock.accept();
 
                 MessagingProtocol<T> protocol = (StompMessagingProtocol<T>) protocolFactory.get();
-                protocol.start(counterConnection, connections); //Init Stomp protocol TODO לבדוק אם זה בסדר שפה
+                protocol.start(counterConnection, connections); //Init Stomp protocol
                 BlockingConnectionHandler<T> handler = new BlockingConnectionHandler<T>(
                         clientSock,
                         encdecFactory.get(),
-                        protocol, 
-                        connections,
-                        counterConnection);
+                        protocol);
                 connections.addConnectionHandler(counterConnection++, handler);
                 execute(handler);
             }

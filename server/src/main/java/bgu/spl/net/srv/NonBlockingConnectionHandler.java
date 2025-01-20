@@ -21,22 +21,15 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
     private final SocketChannel chan;
     private final Reactor<T> reactor;
 
-    private ConnectionsImpl<T> connections;
-    private int connectionID;
-
     public NonBlockingConnectionHandler(
             MessageEncoderDecoder<T> reader,
             MessagingProtocol<T> protocol,
             SocketChannel chan,
-            Reactor<T> reactor,
-            ConnectionsImpl<T> connections, 
-            int connectionID) {
+            Reactor<T> reactor) {
         this.chan = chan;
         this.encdec = reader;
         this.protocol = protocol;
         this.reactor = reactor;
-        this.connections = connections;
-        this.connectionID = connectionID;
     }
 
     public Runnable continueRead() {
@@ -53,9 +46,6 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
             buf.flip();
             return () -> {
                 try {
-                    protocol.start(connectionID, connections); //Init Stomp protocol TODO לבדוק אם זה בסדר שפה
-                    connections.addConnectionHandler(connectionID, this);
-                
                     while (buf.hasRemaining()) {
                         T nextMessage = encdec.decodeNextByte(buf.get());
                         if (nextMessage != null) {
@@ -126,5 +116,6 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
     public void send(T msg) {  
         writeQueue.add(ByteBuffer.wrap(encdec.encode(msg)));
         reactor.updateInterestedOps(chan, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        System.out.println("The server send a respond!");
     }
 }
