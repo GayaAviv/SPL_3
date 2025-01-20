@@ -78,6 +78,9 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
     public void continueWrite() {
         while (!writeQueue.isEmpty()) {
+            if (!chan.isOpen()) {  // TODO
+                return;
+            }
             try {
                 ByteBuffer top = writeQueue.peek();
                 chan.write(top);
@@ -92,10 +95,12 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
             }
         }
 
-        if (writeQueue.isEmpty()) {
-            if (protocol.shouldTerminate()) close();
-            else reactor.updateInterestedOps(chan, SelectionKey.OP_READ);
+        if (writeQueue.isEmpty() && protocol.shouldTerminate()) {
+            close();  //TODO סוגר רק אחרי שהכל נשלח
+        } else {       
+            reactor.updateInterestedOps(chan, SelectionKey.OP_READ); //TODO אם לא צריך לסיים, רק מוודאים שאנחנו מעודכנים ל-OP_READ
         }
+        
     }
 
     private static ByteBuffer leaseBuffer() {
@@ -109,7 +114,9 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
     }
 
     private static void releaseBuffer(ByteBuffer buff) {
-        BUFFER_POOL.add(buff);
+        //synchronized(BUFFER_POOL){ //TODO לבדוק אם הכרחי
+            BUFFER_POOL.add(buff);
+        //} 
     }
 
     @Override
