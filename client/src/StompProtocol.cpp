@@ -1,6 +1,6 @@
 #include "../include/StompProtocol.h"
 
-StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), subscriptionAndIDs(), sentMessages() {}
+StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
 
 int StompProtocol::getNextSubscriptionID(){
     return subscriptionId++;
@@ -21,14 +21,40 @@ bool StompProtocol::getIsConnected(){
     return isConnected;
 }
 
+void StompProtocol::setExitReceipt(const std::string& topic, int receipt){
+    exitReceipts.insert({ receipt, topic});
+}
+void StompProtocol::setSubscriptionReceipt(const std::string& topic, int receipt){
+    subscriptionReceipts.insert({ receipt, topic});
+}
+
 void StompProtocol::disconnect(){
     subscriptionId = 0;
     receipt = 0;
     subscriptionAndIDs.clear();
     sentMessages.clear();
+    isConnected = false;
 
     // TODO : need to close the soket!!!
 
+}
+const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::string& channel, const std::string& user) const{
+    std::vector<Event> filteredEvents;
+
+    // Check if the channel exists in the map
+    auto it = sentMessages.find(channel);
+    if (it != sentMessages.end()) {
+        // Iterate through the events in the vector for the given channel
+        const std::vector<Event>& events = it->second;
+        for (const Event& event : events) {
+            // Filter events by user
+            if (event.getEventOwnerUser() == user) {
+                filteredEvents.push_back(event);
+            }
+        }
+    }
+
+    return filteredEvents;
 }
 
 void StompProtocol::addEvent(std::string channel, Event event){
@@ -66,7 +92,11 @@ void StompProtocol::processFrame(Frame frame){
 }
 
 void StompProtocol::handleMessage(Frame frame){
-    // TODO
+    // Add the massage to the list
+    const std::string frameBody = frame.getBody();
+    Event newEvent(frameBody);
+    std::string channel = newEvent.get_channel_name();
+    addEvent(channel, newEvent);
     
 }
 void StompProtocol::handleReceipt(Frame frame){
@@ -75,9 +105,25 @@ void StompProtocol::handleReceipt(Frame frame){
     if(headers.at("receipt-id") == std::to_string(disconectedReceipt)){
         disconnect();
     }
-    
+    // If its a exit recipt
+    for (const auto& pair : exitReceipts) {
+        int receipt = pair.first;         // Key (int)
+        if(headers.at("receipt-id") == std::to_string(receipt)){
+            const std::string& value = pair.second; // Value (std::string)
+            removeSubscription(value);
+            std::cout << "Exited channel " << value << std::endl;
+        }
+    }
+    for (const auto& pair : subscriptionReceipts) {
+        int receipt = pair.first;         // Key (int)
+        if(headers.at("receipt-id") == std::to_string(receipt)){
+            const std::string& value = pair.second; // Value (std::string)
+            addSubscribe(value, receipt);
+            std::cout << "Joined channel " << value << std::endl;
+        }
+    }  
 }
 void StompProtocol::handleError(Frame frame){
-    //TODO
-    
+    //TODO check what to print
+    disconnect();
 }
