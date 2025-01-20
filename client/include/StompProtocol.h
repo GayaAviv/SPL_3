@@ -2,6 +2,8 @@
 
 #include "../include/ConnectionHandler.h"
 #include "../include/Frame.h"
+#include "../include/event.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -15,7 +17,7 @@ private:
     int disconectedReceipt;
     bool isConnected;
     std::unordered_map<std::string, int> subscriptionAndIDs; //Map of channel -> subscription id
-    std::unordered_map<std::string, std::vector<std::string>> sentMessages; // Map of channel -> messages
+    std::unordered_map<std::string, std::vector<Event>> sentMessages; // Map of channel -> messages
 
 public:
     StompProtocol();
@@ -23,6 +25,7 @@ public:
     void connect(const std::string& host, int port, const std::string& username, const std::string& password);
     
     void send(const std::string& topic, const std::string& message);
+
     void processFrame(Frame frame);
 
     // Get the messages sent to a specific channel
@@ -34,10 +37,14 @@ public:
     int getSubscriptionsId(const std::string& topic);
     void disconnect();
     void setDisconnectReceipt(int id);
+
     void handleConnected(Frame frame);
     void handleMessage(Frame frame);
     void handleReceipt(Frame frame);
     void handleError(Frame frame);
+
     bool getIsConnected();
+
+    void addEvent(std::string channel, Event event);
 
 };

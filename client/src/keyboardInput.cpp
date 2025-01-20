@@ -1,10 +1,12 @@
 #include "../include/keyboardInput.h"
 #include "../include/Frame.h"
 #include "../include/StompProtocol.h"
+#include "../include/event.h"
 
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 Frame processInput(const std::string& input, StompProtocol protocol){
 
@@ -30,7 +32,8 @@ Frame processInput(const std::string& input, StompProtocol protocol){
 
         } else if (command == "report") { // If the command starts with report
             std::cout << "Processing report command...\n";
-            return processReport(restOfInput, protocol);
+            std::vector<Frame> frames = processReport(restOfInput, protocol);
+            return ;//TODO: send each frame
 
         } else if (command == "summary") { // If the command starts with report
             std::cout << "Processing report command...\n";
@@ -101,8 +104,32 @@ Frame processExit(const std::string& exitInput, StompProtocol protocol){
     return frame;
 
 }
-Frame processReport(const std::string& reportInput, StompProtocol protocol){
+std::vector<Frame> processReport(const std::string& reportInput, StompProtocol protocol){
+    std::vector<Frame> frames;
+    //read the file path and prase the channel name and event it contains
+    names_and_events channel_events = parseEventsFile(reportInput);
+    std::string channel = channel_events.channel_name;
+    std::vector<Event> events =  channel_events.events;
+    //save each event on the client
+    for(Event e : events){
+        protocol.addEvent(channel, e);
+        std::string body = "user: " + e.getEventOwnerUser() + "\n" +
+                           "city: " + e.get_city() +"\n" +
+                           "event name: " + e.get_name() +"\n" +
+                           "date time: " + std::to_string(e.get_date_time()) + "\n" +
+                           "general information:\n" +
+                                                "  active: " + e.get_general_information().at("active") + "\n" +
+                                                "  forces_arrival_at_scene: " + e.get_general_information().at("forces_arrival_at_scene") +"\n" +
+                            "description:\n" +
+                             e.get_description();
 
+        //send frame
+        Frame frame("SEND", {{"destination" , channel}},
+                                body);
+        frames.push_back(frame);
+    }
+    return frames;
+    
 }
 Frame processSummary(const std::string& summaryInput, StompProtocol protocol){
 

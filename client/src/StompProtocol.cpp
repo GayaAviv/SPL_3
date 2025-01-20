@@ -30,10 +30,28 @@ void StompProtocol::disconnect(){
     // TODO : need to close the soket!!!
 
 }
+
+void StompProtocol::addEvent(std::string channel, Event event){
+    // Check if the key exists in the map
+    if (sentMessages.find(channel) != sentMessages.end()) {
+        // If the key exists, insert the event in the correct position in the vector
+        auto& events = sentMessages[channel];
+        auto it = std::lower_bound(events.begin(), events.end(), event,
+                                   [](const Event& a, const Event& b) {
+                                       return a.get_date_time() < b.get_date_time();
+                                   });
+        events.insert(it, event);
+    } else {
+        // If the key does not exist, create a new vector and add the event
+        sentMessages[channel] = std::vector<Event>{event};
+    }
+}
+
 void StompProtocol::setDisconnectReceipt(int id){
      disconectedReceipt = id;
 }
 void StompProtocol::processFrame(Frame frame){
+
      const std::string& command = frame.getCommand();
 
     if (command == "CONNECTED") {
