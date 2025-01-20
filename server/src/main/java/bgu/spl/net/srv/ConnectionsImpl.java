@@ -1,10 +1,10 @@
 package bgu.spl.net.srv;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 
 import bgu.spl.net.impl.stomp.Subscriber;
@@ -20,17 +20,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     private Map<String,String> users; //The usernames and their corresponding passwords
 
-    private int counterConnection; //Counter for the connection Id 
-    private Queue<Integer> availableId; //For reusing the connection ID
-
     public ConnectionsImpl(){
         connectionHandlers = new HashMap<>(); //TODO: ?סנכרון
         topicSubscribers = new HashMap<>();
         activeClientUser = new HashMap<>();
+        activeUsers = new LinkedList<>();
         users = new HashMap<>();
-
-        availableId = new LinkedList<>();
-        counterConnection = 0;
     }
     
     /**
@@ -67,7 +62,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
      */
     @Override
     public void disconnect(int connectionId){
-        connectionHandlers.remove(connectionId); //Remove from the client-connectionId data.
+        ConnectionHandler<T> handler = connectionHandlers.remove(connectionId); //Remove from the client-connectionId data.
+        try { //Closeing the connection handler
+            handler.close();
+        } catch (IOException e) {
+        }
 
         for (List<Subscriber> subscribers : topicSubscribers.values()) { // Remove the client from all the channels they are subscribed to.
             for (Subscriber s : subscribers) {
@@ -80,8 +79,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
         String userName = activeClientUser.remove(connectionId); //Remove from connectionId-userName data.
         activeUsers.remove(userName); //Remove from the list of active users
-
-        availableId.add(connectionId); //Save the connectionId for the next connection
     }
 
     
@@ -155,18 +152,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 return s.getSubscribeId();
         }
         return -1;
-    }
-
-    public int getNextID(){
-        int output = 0;
-        if(!availableId.isEmpty()){
-            output = availableId.poll();
-        }
-        else{
-            output = counterConnection;
-            counterConnection++;
-        }
-        return output;
     }
 
     public Map<Integer,ConnectionHandler<T>> getConnectionHandlers(){

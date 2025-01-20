@@ -74,7 +74,8 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         String username = headers.get("login");
         String password = headers.get("passcode");
 
-        if(!connections.getActiveUsers().contains(username)){ //In case the user is already logged in from another client
+        
+        if(connections.getActiveUsers().contains(username)){ //In case the user is already logged in from another client
             sendErrorFrame(msg,"User already logged in");
         }
 
@@ -131,8 +132,9 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         Map<String, String> headers = msg.getHeaders();
         String receiptId = headers.get("receipt");
 
-        connections.disconnect(connectionId);
         sendReceiptFrame(receiptId);
+        shouldTerminate = true;
+        connections.disconnect(connectionId);
     }
 
     private void handleSend(Frame msg) {
@@ -172,8 +174,10 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         headerHashMap.put("message", errorMsg);
 
         Frame errorFrame = new Frame("ERROR",headerHashMap, body.toString());
-        if(connections.send(connectionId, errorFrame))
+        if(connections.send(connectionId, errorFrame)){
+            shouldTerminate = true;
             connections.disconnect(connectionId);
+        }
     }
 
     private void sendConnectedFrame(String version) {

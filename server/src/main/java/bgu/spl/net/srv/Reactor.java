@@ -25,6 +25,8 @@ public class Reactor<T> implements Server<T> {
 
     private ConnectionsImpl<T> connections;
 
+    private int counterConnection; //Counter for the connection Id 
+
     public Reactor(
             int numThreads,
             int port,
@@ -36,6 +38,7 @@ public class Reactor<T> implements Server<T> {
         this.protocolFactory = protocolFactory;
         this.readerFactory = readerFactory;
         this.connections = new ConnectionsImpl<>();
+        counterConnection = 0;
     }
 
     @Override
@@ -104,7 +107,7 @@ public class Reactor<T> implements Server<T> {
                 clientChan,
                 this,
                 connections,
-                connections.getNextID());
+                counterConnection++);
 
         clientChan.register(selector, SelectionKey.OP_READ, handler);
     }
