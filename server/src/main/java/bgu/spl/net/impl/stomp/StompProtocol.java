@@ -123,8 +123,6 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         if(connections.removeSubscriber(connectionId, subscribeId)){
             sendReceiptFrame(receiptId);
         }
-        
-        //TODO : לבדוק אם צריך לשלוח ארור אם לא עשה
     }
 
     private void handleDisconnect(Frame msg) {

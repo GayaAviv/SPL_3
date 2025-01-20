@@ -96,22 +96,8 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
         if(topicSubscribers.containsKey(topic)){ //In case topic already exist
             List<Subscriber> subscribers = topicSubscribers.get(topic);
-
-            boolean canAdd = true;
-            for (Subscriber s : subscribers) {
-                if(connectionId == s.getConnectionId()){
-                    canAdd = false;
-                }
-                if(!canAdd)
-                    break;
-            }
-
-            if(canAdd){
-                Subscriber newSub = new Subscriber(connectionId, subscribeID);
-                subscribers.add(newSub);
-            }
-
-            return canAdd;
+            Subscriber newSub = new Subscriber(connectionId, subscribeID);
+            return subscribers.add(newSub);
         }
 
         else{ //In case of new topic
