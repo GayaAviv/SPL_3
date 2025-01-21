@@ -83,23 +83,24 @@ void CommunicationThread::operator()() {
                 std::string serializedFrame = encoderDecoder.encode(frame);
 
                 // Send the frame to the server
+                
                 if (!connectionHandler->sendLine(serializedFrame)) {
                     std::cout << "Failed to send frame: " << serializedFrame << std::endl;
                     running = false;
                     break;
                 }
-
                 std::cout << "Sent frame: \n" << serializedFrame << std::endl;
+                
             //}
         }
         // Handle receiving frames
         std::string receivedFrame;
         if (connectionHandler->getFrameAscii(receivedFrame, '\0')) {
-        // הסרת תו הסיום (אם נדרש) 
-        if (!receivedFrame.empty() && receivedFrame.back() == '\0') {
-            receivedFrame.pop_back(); // מחיקת תו '\0' אם נוסף בסוף
-        }
-        std::cout << "Full frame received: \n" << receivedFrame << std::endl;
+            // הסרת תו הסיום (אם נדרש) 
+            if (!receivedFrame.empty() && receivedFrame.back() == '\0') {
+                receivedFrame.pop_back(); // מחיקת תו '\0' אם נוסף בסוף
+            }
+            std::cout << "Full frame received: \n" << receivedFrame << std::endl;
         } 
 
         // Decode the received frame

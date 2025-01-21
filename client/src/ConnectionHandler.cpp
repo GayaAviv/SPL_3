@@ -49,6 +49,57 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 	return true;
 }
 
+// bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
+//     size_t tmp = 0;
+//     boost::system::error_code error;
+//     boost::asio::steady_timer timer(socket_.get_executor());
+//     bool timeout_occurred = false;
+
+//     try {
+//         if (!socket_.is_open()) {
+//             std::cerr << "Socket is not open." << std::endl;
+//             return false;
+//         }
+
+//         // הגדר זמן קצוב
+//         timer.expires_after(std::chrono::seconds(5));
+
+//         // הגדר פונקציה שתתבצע אם הזמן הקצוב חלף
+//         timer.async_wait([&](const boost::system::error_code& ec) {
+//             if (!ec) {
+//                 timeout_occurred = true;
+//                 socket_.cancel(); // מבטל פעולת קריאה/כתיבה פעילה
+//             }
+//         });
+
+//         // קריאת הנתונים
+//         while (!error && bytesToRead > tmp) {
+//             tmp += socket_.read_some(boost::asio::buffer(bytes + tmp, bytesToRead - tmp), error);
+//             if (timeout_occurred) {
+//                 std::cerr << "Timeout occurred while reading from socket." << std::endl;
+//                 return false;
+//             }
+//         }
+
+//         // ביטול הטיימר אם הקריאה הסתיימה בהצלחה
+//         timer.cancel();
+
+//         if (error) {
+//             if (error == boost::asio::error::eof) {
+//                 std::cerr << "Connection closed by the server." << std::endl;
+//             } else {
+//                 std::cerr << "Boost error: " << error.message() << std::endl;
+//             }
+//             return false;
+//         }
+//     } catch (std::exception& e) {
+//         std::cerr << "recv failed (Error: " << e.what() << ')' << std::endl;
+//         return false;
+//     }
+
+//     return true;
+// }
+
 bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
 	int tmp = 0;
 	boost::system::error_code error;
@@ -64,6 +115,7 @@ bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
 	}
 	return true;
 }
+
 
 bool ConnectionHandler::getLine(std::string &line) {
 	return getFrameAscii(line, '\n');
