@@ -67,7 +67,7 @@ void CommunicationThread::operator()() {
         {
             std::unique_lock<std::mutex> lock(queueMutex);
 
-            // המתנה לפריימים בתור
+            //Waiting for Frames
             queueCondition.wait(lock, [] { return !frameQueue.empty() || !running; });
 
             if (!running && frameQueue.empty()) {

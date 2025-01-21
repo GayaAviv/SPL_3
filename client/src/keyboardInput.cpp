@@ -151,7 +151,7 @@ Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtoc
 
 Frame keyboardInput::processLogout(const std::string& logoutInput, StompProtocol protocol){
     int receipt = protocol.getNextReceipt();
-    protocol.setDisconnectReceipt( receipt);
+    protocol.setDisconnectReceipt(receipt);
     Frame frame("DISCONNECT", {{"receipt" , std::to_string(receipt)}},
                               "");
     return frame;
