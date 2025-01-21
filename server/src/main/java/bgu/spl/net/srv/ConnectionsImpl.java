@@ -20,7 +20,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     private Map<String,String> users; //The usernames and their corresponding passwords
 
     public ConnectionsImpl(){
-        connectionHandlers = new HashMap<>(); //TODO: ?סנכרון
+        connectionHandlers = new HashMap<>();
         topicSubscribers = new HashMap<>();
         activeClientUser = new HashMap<>();
         activeUsers = new LinkedList<>();

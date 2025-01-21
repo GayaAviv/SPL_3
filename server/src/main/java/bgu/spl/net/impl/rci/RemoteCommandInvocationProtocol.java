@@ -24,7 +24,7 @@ public class RemoteCommandInvocationProtocol<T> implements MessagingProtocol<Ser
         return false;
     }
 
-    @Override //TODO: לבדוק אם צריך את המחלקה הזו
+    @Override
     public void start(int connectionId, Connections<Serializable> connections){
         
     }
