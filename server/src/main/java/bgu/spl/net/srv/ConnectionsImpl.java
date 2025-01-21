@@ -127,9 +127,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
        
     public int isSubscribe(String topic, int connectionId) {
         List<Subscriber> subscribers = topicSubscribers.get(topic);
-        for (Subscriber s : subscribers){
-            if(s.getConnectionId() == connectionId)
-                return s.getSubscribeId();
+        if (subscribers != null){
+            for (Subscriber s : subscribers){
+                if(s.getConnectionId() == connectionId)
+                    return s.getSubscribeId();
+            }
         }
         return -1;
     }
