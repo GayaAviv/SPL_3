@@ -126,5 +126,6 @@ void StompProtocol::handleReceipt(Frame frame){
 }
 void StompProtocol::handleError(Frame frame){
     //TODO check what to print
+    std::cout  << frame.toString() << std::endl;
     disconnect();
 }
