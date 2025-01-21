@@ -9,7 +9,7 @@ using std::endl;
 using std::string;
 
 ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),
-                                                                socket_(io_service_) {}
+                                                                socket_(io_service_) , connected(false){}
 
 ConnectionHandler::~ConnectionHandler() {
 	close();
@@ -22,6 +22,7 @@ bool ConnectionHandler::connect() {
 		tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_); // the server endpoint
 		boost::system::error_code error;
 		socket_.connect(endpoint, error);
+		connected = true;
 		if (error)
 			throw boost::system::system_error(error);
 	}
@@ -102,7 +103,12 @@ bool ConnectionHandler::sendFrameAscii(const std::string &frame, char delimiter)
 void ConnectionHandler::close() {
 	try {
 		socket_.close();
+		connected = false;
 	} catch (...) {
 		std::cout << "closing failed: connection already closed" << std::endl;
 	}
+}
+
+bool ConnectionHandler::isConnected(){
+	return connected;
 }

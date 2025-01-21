@@ -1,5 +1,6 @@
 #include "../include/EncoderDecoder.h"
 #include <sstream>
+#include <iostream>
 
 // Constructor
 EncoderDecoder::EncoderDecoder() = default;
@@ -24,7 +25,7 @@ std::string EncoderDecoder::encode(const Frame& frame) const {
 
     // Add the body
     encodedFrame << frame.getBody() << '\0'; // Null terminator
-
+    
     return encodedFrame.str();
 }
 

@@ -1,4 +1,4 @@
-#include "Threads.h"
+#include "../include/Threads.h"
 
 std::queue<Frame> frameQueue;
 std::mutex queueMutex;
@@ -40,7 +40,8 @@ void KeyboardThread::operator()() {
         if (!frame.getCommand().empty()) {
             std::lock_guard<std::mutex> lock(queueMutex);
             frameQueue.push(frame);
-            queueCondition.notify_one(); // Notify the server thread
+             std::cout << "Added frame: \n" << frame.toString() << std::endl;
+            queueCondition.notify_one(); // Notify the communication thread
         }
     }
 }
@@ -49,11 +50,31 @@ CommunicationThread::CommunicationThread(ConnectionHandler*& connectionHandler, 
     : connectionHandler(connectionHandler), protocol(protocol), encoderDecoder(encoderDecoder) {}
 
 void CommunicationThread::operator()() {
-    while (running && connectionHandler != nullptr) {
+    while (running) {
+        if (connectionHandler == nullptr) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
+        //Checking the connection
+        if (!connectionHandler->isConnected()) {
+            std::cout << "ConnectionHandler is not connected. Exiting loop." << std::endl;
+            running = false;
+            break;
+        }
+
         // Handle sending frames
         {
             std::unique_lock<std::mutex> lock(queueMutex);
-            if (!frameQueue.empty()) {
+
+            //Waiting for Frames
+            queueCondition.wait(lock, [] { return !frameQueue.empty() || !running; });
+
+            if (!running && frameQueue.empty()) {
+                break;
+            }
+
+            //if (!frameQueue.empty()) {
                 Frame frame = frameQueue.front();
                 frameQueue.pop();
 
@@ -61,25 +82,34 @@ void CommunicationThread::operator()() {
                 std::string serializedFrame = encoderDecoder.encode(frame);
 
                 // Send the frame to the server
-                connectionHandler->sendLine(serializedFrame);
+                if (!connectionHandler->sendLine(serializedFrame)) {
+                    std::cout << "Failed to send frame: " << serializedFrame << std::endl;
+                    running = false;
+                    break;
+                }
 
-                std::cout << "Sent frame: " << serializedFrame << std::endl;
-            }
+                std::cout << "Sent frame: \n" << serializedFrame << std::endl;
+            //}
         }
 
         // Handle receiving frames
         std::string receivedFrame;
-        if (connectionHandler->getLine(receivedFrame)) {
-            std::cout << "Received raw frame: " << receivedFrame << std::endl;
+        if (connectionHandler->getFrameAscii(receivedFrame, '\0')) {  //Remove the final character if it exists
+            receivedFrame.pop_back();
+            std::cout << "Full frame received: \n" << receivedFrame << std::endl;
+        } 
 
-            // Decode the received frame
-            Frame frame = encoderDecoder.decode(receivedFrame);
+        // Decode the received frame
+        Frame frame = encoderDecoder.decode(receivedFrame);
 
-            // Process the decoded frame using StompProtocol
-            protocol.processFrame(frame);
-            if (!protocol.getIsConnected()) { 
-                connectionHandler->close();
-            }
+        // Process the decoded frame using StompProtocol
+        protocol.processFrame(frame);
+
+        if (!protocol.getIsConnected()) {
+            std::cout << "Protocol disconnected. Closing connection." << std::endl;
+            connectionHandler->close();
+            running = false;
+            break;
         }
     }
 }

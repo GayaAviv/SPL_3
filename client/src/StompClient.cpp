@@ -17,7 +17,7 @@ int main() {
     keyboardInput keyboardInput;
     ConnectionHandler* connectionHandler = nullptr; // Will be initialized during login
 
-     // Create threads for keyboard and communication
+    // Create threads for keyboard and communication
     KeyboardThread keyboardThread(protocol, keyboardInput, connectionHandler);
     CommunicationThread communicationThread(connectionHandler, protocol, encoderDecoder);
 
