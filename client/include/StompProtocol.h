@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-// TODO: implement the STOMP protocol
 class StompProtocol
 {
 private:
@@ -16,8 +15,8 @@ private:
     int receipt;
     int disconectedReceipt;
     bool isConnected;
-    std::unordered_map<int, std::string> exitReceipts; //Map of channel -> exit receipt
-    std::unordered_map<int, std::string> subscriptionReceipts; //Map of channel -> subscription receipt
+    std::unordered_map<int, std::string> exitReceipts; //Map of exit receipt -> channel
+    std::unordered_map<int, std::string> subscriptionReceipts; //Map of subscription receipt -> channel
     std::unordered_map<std::string, int> subscriptionAndIDs; //Map of channel -> subscription id
     std::unordered_map<std::string, std::vector<Event>> sentMessages; // Map of channel -> messages
 

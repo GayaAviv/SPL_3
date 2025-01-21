@@ -34,9 +34,6 @@ void StompProtocol::disconnect(){
     subscriptionAndIDs.clear();
     sentMessages.clear();
     isConnected = false;
-
-    // TODO : need to close the soket!!!
-
 }
 const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::string& channel, const std::string& user) const{
     std::vector<Event> filteredEvents;
@@ -125,7 +122,8 @@ void StompProtocol::handleReceipt(Frame frame){
     }  
 }
 void StompProtocol::handleError(Frame frame){
-    //TODO check what to print
+    std::cout << "Received error from the server: " << std::endl;
+    std::cout << "\n";
     std::cout  << frame.toString() << std::endl;
     disconnect();
 }

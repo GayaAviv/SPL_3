@@ -38,6 +38,7 @@ Frame keyboardInput::processInput(const std::string& input, StompProtocol protoc
             std::cout << "Processing logout command...\n";
             return processLogout(restOfInput, protocol);
         }
+    std::cout << "Illegal command, try again\n";
     return Frame();
 }
 
@@ -58,7 +59,7 @@ Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandl
 
     // Check if already connected
     if (connectionHandler != nullptr) {
-        std::cerr << "The client is already logged in, log out before trying again" << std::endl;
+        std::cerr << "The client is already logged in, log out before trying again." << std::endl;
         return Frame(); // Return an empty frame
     }
 

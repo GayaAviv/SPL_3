@@ -10,8 +10,8 @@
 #include "EncoderDecoder.h"
 
 extern std::queue<Frame> frameQueue;
-extern std::mutex queueMutex;
-extern std::condition_variable queueCondition;
+extern std::mutex queueMutex;  //Lock object
+extern std::condition_variable queueCondition; //Implement wait and notify synchronization
 extern std::atomic<bool> running;
 
 

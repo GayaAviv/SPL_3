@@ -41,7 +41,7 @@ void KeyboardThread::operator()() {
             std::lock_guard<std::mutex> lock(queueMutex);
             frameQueue.push(frame);
              std::cout << "Added frame: \n" << frame.toString() << std::endl;
-            queueCondition.notify_one(); // Notify the server thread
+            queueCondition.notify_one(); // Notify the communication thread
         }
     }
 }
@@ -52,12 +52,11 @@ CommunicationThread::CommunicationThread(ConnectionHandler*& connectionHandler, 
 void CommunicationThread::operator()() {
     while (running) {
         if (connectionHandler == nullptr) {
-            //std::cout << "Waiting for ConnectionHandler to initialize..." << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
-        // בדיקת תקינות החיבור
+        //Checking the connection
         if (!connectionHandler->isConnected()) {
             std::cout << "ConnectionHandler is not connected. Exiting loop." << std::endl;
             running = false;
@@ -84,12 +83,12 @@ void CommunicationThread::operator()() {
                 std::cout << "Sent frame: \n" << serializedFrame << std::endl;
             }
         }
+
         // Handle receiving frames
         std::string receivedFrame;
-        if (connectionHandler->getFrameAscii(receivedFrame, '\0')) {
-        // הסרת תו הסיום (אם נדרש) 
-        receivedFrame.pop_back(); // מחיקת תו '\0' אם נוסף בסוף
-        std::cout << "Full frame received: \n" << receivedFrame << std::endl;
+        if (connectionHandler->getFrameAscii(receivedFrame, '\0')) {  //Remove the final character if it exists
+            receivedFrame.pop_back();
+            std::cout << "Full frame received: \n" << receivedFrame << std::endl;
         } 
 
         // Decode the received frame
