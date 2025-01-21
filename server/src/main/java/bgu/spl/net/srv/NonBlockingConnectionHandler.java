@@ -21,22 +21,15 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
     private final SocketChannel chan;
     private final Reactor<T> reactor;
 
-    private ConnectionsImpl<T> connections;
-    private int connectionID;
-
     public NonBlockingConnectionHandler(
             MessageEncoderDecoder<T> reader,
             MessagingProtocol<T> protocol,
             SocketChannel chan,
-            Reactor<T> reactor,
-            ConnectionsImpl<T> connections, 
-            int connectionID) {
+            Reactor<T> reactor) {
         this.chan = chan;
         this.encdec = reader;
         this.protocol = protocol;
         this.reactor = reactor;
-        this.connections = connections;
-        this.connectionID = connectionID;
     }
 
     public Runnable continueRead() {
@@ -53,9 +46,6 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
             buf.flip();
             return () -> {
                 try {
-                    protocol.start(connectionID, connections); //Init Stomp protocol TODO לבדוק אם זה בסדר שפה
-                    connections.addConnectionHandler(connectionID, this);
-                
                     while (buf.hasRemaining()) {
                         T nextMessage = encdec.decodeNextByte(buf.get());
                         if (nextMessage != null) {
@@ -88,6 +78,9 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
     public void continueWrite() {
         while (!writeQueue.isEmpty()) {
+            if (!chan.isOpen()) {  // TODO
+                return;
+            }
             try {
                 ByteBuffer top = writeQueue.peek();
                 chan.write(top);
@@ -102,10 +95,12 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
             }
         }
 
-        if (writeQueue.isEmpty()) {
-            if (protocol.shouldTerminate()) close();
-            else reactor.updateInterestedOps(chan, SelectionKey.OP_READ);
+        if (writeQueue.isEmpty() && protocol.shouldTerminate()) {
+            close();  //TODO סוגר רק אחרי שהכל נשלח
+        } else {       
+            reactor.updateInterestedOps(chan, SelectionKey.OP_READ); //TODO אם לא צריך לסיים, רק מוודאים שאנחנו מעודכנים ל-OP_READ
         }
+        
     }
 
     private static ByteBuffer leaseBuffer() {
@@ -119,12 +114,15 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
     }
 
     private static void releaseBuffer(ByteBuffer buff) {
-        BUFFER_POOL.add(buff);
+        //synchronized(BUFFER_POOL){ //TODO לבדוק אם הכרחי
+            BUFFER_POOL.add(buff);
+        //} 
     }
 
     @Override
     public void send(T msg) {  
         writeQueue.add(ByteBuffer.wrap(encdec.encode(msg)));
         reactor.updateInterestedOps(chan, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        System.out.println("The server send a respond!");
     }
 }
