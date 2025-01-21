@@ -66,7 +66,15 @@ void CommunicationThread::operator()() {
         // Handle sending frames
         {
             std::unique_lock<std::mutex> lock(queueMutex);
-            if (!frameQueue.empty()) {
+
+            // המתנה לפריימים בתור
+            queueCondition.wait(lock, [] { return !frameQueue.empty() || !running; });
+
+            if (!running && frameQueue.empty()) {
+                break;
+            }
+
+            //if (!frameQueue.empty()) {
                 Frame frame = frameQueue.front();
                 frameQueue.pop();
 
@@ -81,7 +89,7 @@ void CommunicationThread::operator()() {
                 }
 
                 std::cout << "Sent frame: \n" << serializedFrame << std::endl;
-            }
+            //}
         }
 
         // Handle receiving frames
@@ -96,7 +104,7 @@ void CommunicationThread::operator()() {
 
         // Process the decoded frame using StompProtocol
         protocol.processFrame(frame);
-        
+
         if (!protocol.getIsConnected()) {
             std::cout << "Protocol disconnected. Closing connection." << std::endl;
             connectionHandler->close();
