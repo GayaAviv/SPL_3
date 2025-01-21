@@ -1,21 +1,28 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
             "type": "shell",
-            "label": "make StompWCIClient",
+            "label": "make StompEMIClient",
             "command": "make",
-            "args": ["StompWCIClient"],
+            "args": ["StompEMIClient"],
             "options": {
-                "cwd": "${workspaceFolder}/client"
+                "cwd": "${workspaceFolder}/client",
+                "env": {
+                    "LDFLAGS": "-lboost_system -lpthread"
+                }
             }
         },
         {
             "type": "shell",
-            "label": "make EchoClient",
+            "label": "make StompClient",
             "command": "make",
-            "args": ["EchoClient"],
+            "args": ["StompClient"],
             "options": {
-                "cwd": "${workspaceFolder}/client"
+                "cwd": "${workspaceFolder}/client",
+                "env": {
+                    "LDFLAGS": "-lboost_system -lpthread"
+                }
             }
         },
         {
@@ -27,6 +34,5 @@
                 "cwd": "${workspaceFolder}/server"
             }
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

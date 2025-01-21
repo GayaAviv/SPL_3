@@ -82,6 +82,7 @@ void StompProtocol::processFrame(Frame frame){
 
     if (command == "CONNECTED") {
         isConnected  = true;
+        std::cout << "Login successful" << std::endl;
     } else if (command == "MESSAGE") {
         handleMessage(frame);
     } else if (command == "RECEIPT") {

@@ -1,4 +1,4 @@
-#include "Threads.h"
+#include "../include/Threads.h"
 
 std::queue<Frame> frameQueue;
 std::mutex queueMutex;
@@ -48,8 +48,63 @@ void KeyboardThread::operator()() {
 CommunicationThread::CommunicationThread(ConnectionHandler*& connectionHandler, StompProtocol& protocol, EncoderDecoder& encoderDecoder)
     : connectionHandler(connectionHandler), protocol(protocol), encoderDecoder(encoderDecoder) {}
 
+// void CommunicationThread::operator()() {
+    
+//     while (running ) {
+//         if (connectionHandler == nullptr) {
+//             // המתנה לאתחול connectionHandler
+//             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//             continue;
+//         }
+//         // Handle sending frames
+//         {
+//             std::unique_lock<std::mutex> lock(queueMutex);
+//             if (!frameQueue.empty()) {
+//                 Frame frame = frameQueue.front();
+//                 frameQueue.pop();
+
+//                 // Encode the frame to a string
+//                 std::string serializedFrame = encoderDecoder.encode(frame);
+
+//                 // Send the frame to the server
+//                 connectionHandler->sendLine(serializedFrame);
+
+//                 std::cout << "Sent frame: " << serializedFrame << std::endl;
+//             }
+//         }
+
+//         // Handle receiving frames
+//         std::string receivedFrame;
+//         if (connectionHandler->getLine(receivedFrame)) {
+//             std::cout << "Received raw frame: " << receivedFrame << std::endl;
+
+//             // Decode the received frame
+//             Frame frame = encoderDecoder.decode(receivedFrame);
+
+//             // Process the decoded frame using StompProtocol
+//             protocol.processFrame(frame);
+//             if (!protocol.getIsConnected()) { 
+//                 connectionHandler->close();
+//             }
+//         }
+//     }
+// }
+
 void CommunicationThread::operator()() {
-    while (running && connectionHandler != nullptr) {
+    while (running) {
+        if (connectionHandler == nullptr) {
+            //std::cout << "Waiting for ConnectionHandler to initialize..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
+        // בדיקת תקינות החיבור
+        if (!connectionHandler->connect()) {
+            std::cout << "ConnectionHandler is not connected. Exiting loop." << std::endl;
+            running = false;
+            break;
+        }
+
         // Handle sending frames
         {
             std::unique_lock<std::mutex> lock(queueMutex);
@@ -61,7 +116,11 @@ void CommunicationThread::operator()() {
                 std::string serializedFrame = encoderDecoder.encode(frame);
 
                 // Send the frame to the server
-                connectionHandler->sendLine(serializedFrame);
+                if (!connectionHandler->sendLine(serializedFrame)) {
+                    std::cout << "Failed to send frame: " << serializedFrame << std::endl;
+                    running = false;
+                    break;
+                }
 
                 std::cout << "Sent frame: " << serializedFrame << std::endl;
             }
@@ -69,17 +128,25 @@ void CommunicationThread::operator()() {
 
         // Handle receiving frames
         std::string receivedFrame;
-        if (connectionHandler->getLine(receivedFrame)) {
-            std::cout << "Received raw frame: " << receivedFrame << std::endl;
+        if (!connectionHandler->getLine(receivedFrame)) {
+            std::cout << "Failed to receive frame. Closing connection." << std::endl;
+            running = false;
+            connectionHandler->close();
+            break;
+        }
 
-            // Decode the received frame
-            Frame frame = encoderDecoder.decode(receivedFrame);
+        std::cout << "Received raw frame: " << receivedFrame << std::endl;
 
-            // Process the decoded frame using StompProtocol
-            protocol.processFrame(frame);
-            if (!protocol.getIsConnected()) { 
-                connectionHandler->close();
-            }
+        // Decode the received frame
+        Frame frame = encoderDecoder.decode(receivedFrame);
+
+        // Process the decoded frame using StompProtocol
+        protocol.processFrame(frame);
+        if (!protocol.getIsConnected()) {
+            std::cout << "Protocol disconnected. Closing connection." << std::endl;
+            connectionHandler->close();
+            running = false;
+            break;
         }
     }
 }
