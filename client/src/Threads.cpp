@@ -19,11 +19,11 @@ void KeyboardThread::operator()() {
 
         if (userInput.rfind("login", 0) == 0) {
             // Initialize the connection handler on login
-            std::string connectionDetails = userInput.substr(6); // Skip "login "
+            std::string connectionDetails = trim(userInput.substr(5)); // Skip "login "
             frame = keyboardInputInstance.processLogin(connectionDetails, connectionHandler);
 
         } else if (userInput.rfind("report", 0) == 0) {
-            std::string filePath = userInput.substr(7); // Skip "report "
+            std::string filePath = trim(userInput.substr(6)); // Skip "report "
             std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
             for(Frame f : frames){
                 if (!f.getCommand().empty()) {
@@ -43,6 +43,17 @@ void KeyboardThread::operator()() {
             queueCondition.notify_one(); // Notify the communication thread
         }
     }
+}
+std::string KeyboardThread::trim(const std::string& str){
+    // Remove leading spaces
+    size_t start = str.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) {
+        return ""; // String is entirely whitespace
+    }
+
+    // Remove trailing spaces
+    size_t end = str.find_last_not_of(" \t\n\r");
+    return str.substr(start, end - start + 1);
 }
 
 CommunicationThread::CommunicationThread(ConnectionHandler*& connectionHandler, StompProtocol& protocol, EncoderDecoder& encoderDecoder)
@@ -119,3 +130,4 @@ void CommunicationThread::operator()() {
         }
     }
 }
+

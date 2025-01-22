@@ -44,6 +44,11 @@ Frame keyboardInput::processInput(const std::string& input, StompProtocol& proto
 
 Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandler*& connectionHandler){
 
+    if (loginInput.empty()) {
+        std::cerr << "login command need 3 args: {host:port} {username} {password}" << std::endl;
+        return Frame(); // Return an empty frame or handle the error as needed
+    }
+
     // Split the input into components: {host:port}, {username}, {password}
     size_t firstSpace = loginInput.find(' ');
     size_t secondSpace = loginInput.find(' ', firstSpace + 1);
@@ -82,6 +87,14 @@ Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandl
 }
 
 Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& protocol){
+    if(!protocol.getIsConnected()){
+        std::cerr << "join command need 1 args: {channel_name}" << std::endl;
+        return Frame(); // Return an empty frame or handle the error as needed
+    }
+    if (joinInput.empty()) {
+        std::cerr << "join command need 1 args: {channel_name}" << std::endl;
+        return Frame(); // Return an empty frame or handle the error as needed
+    }
     int id = protocol.getNextSubscriptionID();
     int receipt = protocol.getNextReceipt();
     Frame frame("SUBSCRIBE", {{"destination" , "/"+ joinInput},
@@ -94,6 +107,10 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
 }
 
 Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& protocol){
+    if (exitInput.empty()) {
+        std::cerr << "exit command need 1 args: {channel_name}" << std::endl;
+        return Frame(); // Return an empty frame or handle the error as needed
+    }
     int id = protocol.getSubscriptionsId(exitInput);
     int receipt = protocol.getNextReceipt();
     Frame frame("UNSUBSCRIBE", {{"id", std::to_string(id)},
@@ -105,8 +122,13 @@ Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& pr
 
 }
 std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, StompProtocol& protocol){
-    std::cout << "Processing report command...\n";
     std::vector<Frame> frames;
+
+    if (reportInput.empty()) {
+        std::cerr << "report command need 1 args: {file}" << std::endl;
+        return frames; // Return an empty frame or handle the error as needed
+    }
+    
     //read the file path and prase the channel name and event it contains
     names_and_events channel_events = parseEventsFile(reportInput);
     std::string channel = channel_events.channel_name;
@@ -133,6 +155,11 @@ std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, 
 }
 
 Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtocol& protocol){
+    if (summaryInput.empty()) {
+        std::cerr << "summary command need 3 args: {channel_name} {user} {file}" << std::endl;
+        return Frame(); // Return an empty frame or handle the error as needed
+    }
+
     // Split the input string to extract parameters
     std::istringstream inputStream(summaryInput);
     std::string command, channelName, user, fileName;

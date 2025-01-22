@@ -20,6 +20,7 @@ private:
     StompProtocol& protocol;
     keyboardInput& keyboardInputInstance;
     ConnectionHandler*& connectionHandler;
+    std::string trim(const std::string& str);
 
 public:
     KeyboardThread(StompProtocol& protocol, keyboardInput& keyboardInput, ConnectionHandler*& connectionHandler);
