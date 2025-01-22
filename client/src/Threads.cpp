@@ -12,7 +12,7 @@ void KeyboardThread::operator()() {
     std::string userInput;
 
     while (running) {
-        std::cout << "> ";
+        
         std::getline(std::cin, userInput);
 
         Frame frame;
@@ -40,7 +40,6 @@ void KeyboardThread::operator()() {
         if (!frame.getCommand().empty()) {
             //std::lock_guard<std::mutex> lock(queueMutex);
             frameQueue.push(frame);
-            std::cout << "Added frame: \n" << frame.toString() << std::endl;
             queueCondition.notify_one(); // Notify the communication thread
         }
     }

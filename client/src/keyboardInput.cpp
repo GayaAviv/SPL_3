@@ -9,7 +9,7 @@
 #include <vector>
 #include <fstream>
 
-Frame keyboardInput::processInput(const std::string& input, StompProtocol protocol){
+Frame keyboardInput::processInput(const std::string& input, StompProtocol& protocol){
 
     std::istringstream iss(input);
     std::string command;
@@ -81,7 +81,7 @@ Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandl
     return frame;
 }
 
-Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol protocol){
+Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& protocol){
     int id = protocol.getNextSubscriptionID();
     int receipt = protocol.getNextReceipt();
     Frame frame("SUBSCRIBE", {{"destination" , "/"+ joinInput},
@@ -93,17 +93,18 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol pro
     return frame;
 }
 
-Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol protocol){
+Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& protocol){
     int id = protocol.getSubscriptionsId(exitInput);
+    int receipt = protocol.getNextReceipt();
     Frame frame("UNSUBSCRIBE", {{"id", std::to_string(id)},
-                              {"receipt" , std::to_string(protocol.getNextReceipt())}},
+                              {"receipt" , std::to_string(receipt)}},
                               "");
-    protocol.setExitReceipt(exitInput, id);
+    protocol.setExitReceipt(exitInput, receipt);
     
     return frame;
 
 }
-std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, StompProtocol protocol){
+std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, StompProtocol& protocol){
     std::cout << "Processing report command...\n";
     std::vector<Frame> frames;
     //read the file path and prase the channel name and event it contains
@@ -131,7 +132,7 @@ std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, 
     
 }
 
-Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtocol protocol){
+Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtocol& protocol){
     // Split the input string to extract parameters
     std::istringstream inputStream(summaryInput);
     std::string command, channelName, user, fileName;
@@ -149,7 +150,7 @@ Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtoc
 
 }
 
-Frame keyboardInput::processLogout(const std::string& logoutInput, StompProtocol protocol){
+Frame keyboardInput::processLogout(const std::string& logoutInput, StompProtocol& protocol){
     int receipt = protocol.getNextReceipt();
     protocol.setDisconnectReceipt(receipt);
     Frame frame("DISCONNECT", {{"receipt" , std::to_string(receipt)}},

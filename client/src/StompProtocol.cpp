@@ -1,20 +1,29 @@
 #include "../include/StompProtocol.h"
 
+std::mutex subscriptionMutex;
+std::mutex receiptMutex;
+std::mutex sentMessagesMutex;
+
 StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
 
 int StompProtocol::getNextSubscriptionID(){
+    std::lock_guard<std::mutex> lock(subscriptionMutex);
     return subscriptionId++;
 }
  int StompProtocol::getNextReceipt(){
+    std::lock_guard<std::mutex> lock(receiptMutex);
     return receipt++;
  }
 void StompProtocol::addSubscribe(const std::string& topic, int id){
+    std::lock_guard<std::mutex> lock(subscriptionMutex);
     subscriptionAndIDs.insert({topic , id});
 }
 void StompProtocol::removeSubscription(const std::string& topic){
+    std::lock_guard<std::mutex> lock(subscriptionMutex);
     subscriptionAndIDs.erase(topic);
 }
 int StompProtocol::getSubscriptionsId(const std::string& topic){
+    std::lock_guard<std::mutex> lock(subscriptionMutex);
     return subscriptionAndIDs.at(topic);
 }
 bool StompProtocol::getIsConnected(){
@@ -22,9 +31,11 @@ bool StompProtocol::getIsConnected(){
 }
 
 void StompProtocol::setExitReceipt(const std::string& topic, int receipt){
+    std::lock_guard<std::mutex> lock(receiptMutex);
     exitReceipts.insert({ receipt, topic});
 }
 void StompProtocol::setSubscriptionReceipt(const std::string& topic, int receipt){
+    std::lock_guard<std::mutex> lock(receiptMutex);
     subscriptionReceipts.insert({ receipt, topic});
 }
 
@@ -36,6 +47,7 @@ void StompProtocol::disconnect(){
     isConnected = false;
 }
 const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::string& channel, const std::string& user) const{
+    std::lock_guard<std::mutex> lock(sentMessagesMutex);
     std::vector<Event> filteredEvents;
 
     // Check if the channel exists in the map
@@ -55,6 +67,7 @@ const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::
 }
 
 void StompProtocol::addEvent(std::string channel, Event event){
+    std::lock_guard<std::mutex> lock(sentMessagesMutex);
     // Check if the key exists in the map
     if (sentMessages.find(channel) != sentMessages.end()) {
         // If the key exists, insert the event in the correct position in the vector
@@ -112,6 +125,7 @@ void StompProtocol::handleReceipt(Frame frame){
             std::cout << "Exited channel " << value << std::endl;
         }
     }
+    //if its a subscribe receipt
     for (const auto& pair : subscriptionReceipts) {
         int receipt = pair.first;         // Key (int)
         if(headers.at("receipt-id") == std::to_string(receipt)){

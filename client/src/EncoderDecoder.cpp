@@ -22,10 +22,10 @@ std::string EncoderDecoder::encode(const Frame& frame) const {
 
     // Add an empty line to separate headers and body
     encodedFrame << "\n";
-
+    
     // Add the body
     encodedFrame << frame.getBody() << '\0'; // Null terminator
-    
+
     return encodedFrame.str();
 }
 

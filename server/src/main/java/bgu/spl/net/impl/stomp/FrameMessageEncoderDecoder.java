@@ -14,7 +14,7 @@ public class FrameMessageEncoderDecoder<T> implements MessageEncoderDecoder<Fram
     public Frame decodeNextByte(byte nextByte){
 
         if (nextByte == '\u0000') {
-            String frameString = buffer.toString();
+            String frameString = buffer.toString().trim();
             buffer.setLength(0); // Reset the buffer
             return parseFrame(frameString); // Parse the complete frame and return it
         } else {
