@@ -70,7 +70,8 @@
         "ranges": "cpp",
         "stop_token": "cpp",
         "cinttypes": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "*.ipp": "cpp"
     },
     "makefile.makefilePath": "client/"
 }
