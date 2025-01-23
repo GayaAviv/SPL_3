@@ -110,7 +110,6 @@ void StompProtocol::processFrame(Frame frame){
 void StompProtocol::handleConnected(Frame frame){
     isConnected  = true;
     std::cout << "Login successful" << std::endl;
-
 }
 
 void StompProtocol::handleMessage(Frame frame){

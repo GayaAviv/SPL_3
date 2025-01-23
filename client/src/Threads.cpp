@@ -98,9 +98,6 @@ void CommunicationThread::operator()() {
                 std::cout << running << std::endl; //TODO
                 break;
             }
-
-            std::cout << "Sent frame: \n" << serializedFrame << std::endl;
-        
         }
 
         // Handle receiving frames
