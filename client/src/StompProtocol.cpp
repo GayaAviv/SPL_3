@@ -73,7 +73,6 @@ const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::
             }
         }
     }
-
     return filteredEvents;
 }
 

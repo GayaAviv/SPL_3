@@ -36,7 +36,7 @@ void KeyboardThread::operator()() {
             std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
             for(Frame f : frames){
                 if (!f.getCommand().empty()) {
-                    std::lock_guard<std::mutex> lock(queueMutex);
+                    //std::lock_guard<std::mutex> lock(queueMutex);
                     frameQueue.push(f);
                     queueCondition.notify_one(); // Notify the communication thread
                 }
@@ -47,7 +47,7 @@ void KeyboardThread::operator()() {
 
         // Add the frame to the queue if it's valid
         if (!frame.getCommand().empty()) {
-            std::lock_guard<std::mutex> lock(queueMutex);
+            //std::lock_guard<std::mutex> lock(queueMutex);
             frameQueue.push(frame);
             queueCondition.notify_one(); // Notify the communication thread
         }
@@ -121,6 +121,9 @@ void CommunicationThread::operator()() {
         if(frame.getCommand() == "ERROR"){
             connectionHandler->close();
             running.store(false);
+        }
+        else if(!protocol.getIsConnected()){
+            connectionHandler = nullptr;
         }
     }
 }

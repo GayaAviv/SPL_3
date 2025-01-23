@@ -173,7 +173,7 @@ Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtoc
     inputStream >> channelName >> user >> fileName;
 
     // Retrieve the events for the given channel and user from the protocol
-    const std::vector<Event>& events = protocol.getMessagesForChannelAndUser(channelName, user);
+    const std::vector<Event>& events = protocol.getMessagesForChannelAndUser(channelName, user); 
 
     // Call the function to write the summary to the file
     writeSummary(channelName, user, fileName, events);

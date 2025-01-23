@@ -20,26 +20,6 @@
                 "active": true,
                 "forces_arrival_at_scene": false
             }
-        },
-        {
-            "event_name": "Tech Conference",
-            "city": "Silicon Valley",
-            "date_time": 1735092000,
-            "description": "Annual Tech Innovators Conference begins at the Tech Center. Keynote by AI pioneer Sarah Lee.",
-            "general_information": {
-                "active": false,
-                "forces_arrival_at_scene": false
-            }
-        },
-        {
-            "event_name": "Sports Final",
-            "city": "Victory City",
-            "date_time": 1735137600,
-            "description": "Local team 'Thunderhawks' wins the regional basketball championship in a thrilling overtime match.",
-            "general_information": {
-                "active": false,
-                "forces_arrival_at_scene": false
-            }
         }
     ]
 }

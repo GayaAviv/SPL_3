@@ -1,0 +1,19 @@
+Channel news
+Stats:
+Total: 2
+active: 1
+forces arrival at scene: 0
+
+Event Reports:
+Report_1:
+  city:  Capital City
+  date time: 23/12/2024 20:40:00
+  event name:  Election Results
+  summary: Mayor's election results an...
+
+Report_2:
+  city:  Stormville
+  date time: 24/12/2024 12:40:00
+  event name:  Severe Weather Alert
+  summary: Tornado watch issued for th...
+
