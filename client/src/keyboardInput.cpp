@@ -23,20 +23,16 @@ Frame keyboardInput::processInput(const std::string& input, StompProtocol& proto
     }
 
     if (command == "join") { // If the command starts with join
-            std::cout << "Processing join command...\n";
             return processJoin(restOfInput, protocol);
 
         } else if (command == "exit") { // If the command starts with exit
-            std::cout << "Processing exit command...\n";
             return processExit(restOfInput, protocol);
 
         } else if (command == "summary") { // If the command starts with report
-            std::cout << "Processing summary command...\n";
             processSummary(restOfInput, protocol);
             return Frame();
 
         } else if (command == "logout") { // If the command starts with logout
-            std::cout << "Processing logout command...\n";
             return processLogout(restOfInput, protocol);
         }
     std::cout << "Illegal command, try again\n";
@@ -65,6 +61,7 @@ Frame keyboardInput::processLogin(const std::string& loginInput, StompProtocol& 
 
     // Create a new ConnectionHandler
     connectionHandler = new ConnectionHandler(host, port);
+    connectionHandler->connect();
     protocol.setUser(username);
 
     // If connection is successful, create a CONNECT frame
@@ -93,7 +90,7 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
                               {"id", std::to_string(id)},
                               {"receipt" , std::to_string(receipt)}},
                               "");
-                              
+
     protocol.setSubscriptionReceipt(joinInput, receipt);
     
     return frame;

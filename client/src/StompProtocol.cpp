@@ -1,5 +1,6 @@
 #include "../include/StompProtocol.h"
 
+std::mutex sentMessagesMutex;
 
 StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), user(""),
                                  exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
@@ -50,6 +51,7 @@ void StompProtocol::disconnect(){
 
 const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::string& channel, const std::string& user) const{
 
+    std::lock_guard<std::mutex> lock(sentMessagesMutex);
     std::vector<Event> filteredEvents;
 
     // Check if the channel exists in the map
@@ -70,6 +72,7 @@ const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::
 
 void StompProtocol::addEvent(std::string channel, Event event){
 
+    std::lock_guard<std::mutex> lock(sentMessagesMutex);
     // Check if the key exists in the map
     if (sentMessages.find(channel) != sentMessages.end()) {
         // If the key exists, insert the event in the correct position in the vector
@@ -114,9 +117,7 @@ void StompProtocol::handleMessage(Frame frame){
     Event newEvent(frameBody, channle);
     
     std::string channel = newEvent.get_channel_name();
-    addEvent(channel, newEvent);
-    std::cout << "reported" << std::endl;
-    
+    addEvent(channel, newEvent);    
 }
 void StompProtocol::handleReceipt(Frame frame){
     std::unordered_map<std::string, std::string> headers = frame.getHeaders();

@@ -3,6 +3,7 @@
 std::queue<Frame> frameQueue;
 std::mutex queueMutex;
 std::condition_variable queueCondition;
+std::atomic<bool> running(true);
 
 KeyboardThread::KeyboardThread(StompProtocol& protocol, keyboardInput& keyboardInput, ConnectionHandler*& connectionHandler)
     : protocol(protocol), keyboardInputInstance(keyboardInput), connectionHandler(connectionHandler) {}
@@ -10,7 +11,7 @@ KeyboardThread::KeyboardThread(StompProtocol& protocol, keyboardInput& keyboardI
 void KeyboardThread::operator()() {
     std::string userInput;
 
-    while (!protocol.getIsConnected() || connectionHandler->isConnected()) { //While no one did login or the connection not lost
+    while (running) { //While no one did login or the connection not lost
         
         std::getline(std::cin, userInput);
 
@@ -30,14 +31,14 @@ void KeyboardThread::operator()() {
                 frame = keyboardInputInstance.processLogin(connectionDetails, protocol, connectionHandler);
             }
 
-        } else if (userInput.rfind("report", 0) == 0) {
+        } else if (userInput.rfind("report", 0) == 0 && protocol.getIsConnected()) {
             std::string filePath = trim(userInput.substr(6)); // Skip "report "
             std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
             for(Frame f : frames){
                 if (!f.getCommand().empty()) {
                     std::lock_guard<std::mutex> lock(queueMutex);
                     frameQueue.push(f);
-                    //queueCondition.notify_one(); // Notify the communication thread
+                    queueCondition.notify_one(); // Notify the communication thread
                 }
             }
         } else if (protocol.getIsConnected()) {
@@ -48,7 +49,7 @@ void KeyboardThread::operator()() {
         if (!frame.getCommand().empty()) {
             std::lock_guard<std::mutex> lock(queueMutex);
             frameQueue.push(frame);
-            //queueCondition.notify_one(); // Notify the communication thread
+            queueCondition.notify_one(); // Notify the communication thread
         }
     }
 }
@@ -68,36 +69,37 @@ CommunicationThread::CommunicationThread(ConnectionHandler*& connectionHandler, 
     : connectionHandler(connectionHandler), protocol(protocol), encoderDecoder(encoderDecoder) {}
 
 void CommunicationThread::operator()() {
-    while (!protocol.getIsConnected() || connectionHandler->isConnected()) {
+    while (running) { 
 
         if (connectionHandler == nullptr) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
-        //Checking the connection
-        if (!connectionHandler->isConnected()) {
-            std::cout << "ConnectionHandler is not connected. Exiting loop." << std::endl;
-            break;
-        }
-
         // Handle sending frames
         {
-            std::unique_lock<std::mutex> lock(queueMutex);
+             std::unique_lock<std::mutex> lock(queueMutex);
 
-            if(!frameQueue.empty()){
-                Frame frame = frameQueue.front();
-                frameQueue.pop();
+            //Waiting for Frames
+            queueCondition.wait(lock, [] { return !frameQueue.empty() || !running; });
 
-                // Encode the frame to a string
-                std::string serializedFrame = encoderDecoder.encode(frame);
+            if (!connectionHandler->isConnected() && frameQueue.empty()) {
+                break;
+            }
 
-                // Send the frame to the server
-                if (!connectionHandler->sendLine(serializedFrame)) {
-                    connectionHandler->close();
-                    break;
-                }
-            }        
+            Frame frame = frameQueue.front();
+            frameQueue.pop();
+
+            // Encode the frame to a string
+            std::string serializedFrame = encoderDecoder.encode(frame);
+
+            // Send the frame to the server
+            if (!connectionHandler->sendLine(serializedFrame)) {
+                connectionHandler->close();
+                running.store(false);
+                break;
+            }
+                   
         }
 
         // Handle receiving frames
@@ -107,6 +109,7 @@ void CommunicationThread::operator()() {
         }
         else{ //In case of server disconnected
             connectionHandler->close();
+            running.store(false);
             break;
         } 
 
@@ -116,7 +119,8 @@ void CommunicationThread::operator()() {
         // Process the decoded frame using StompProtocol
         protocol.processFrame(frame);
         if(frame.getCommand() == "ERROR"){
-            connectionHandler ->close();
+            connectionHandler->close();
+            running.store(false);
         }
     }
 }
