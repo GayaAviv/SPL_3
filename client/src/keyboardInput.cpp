@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <ctime>
 
 Frame keyboardInput::processInput(const std::string& input, StompProtocol& protocol){
 
@@ -238,6 +239,16 @@ void keyboardInput::writeSummary(const std::string& channelName, const std::stri
         return text;
     };
 
+    // Helper function to convert timestamp to human-readable format
+    auto formatDateTime = [](int timestamp) {
+        std::time_t time = static_cast<std::time_t>(timestamp);
+        char buffer[20];
+        if (std::strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M:%S", std::localtime(&time))) {
+            return std::string(buffer);
+        }
+        return std::string("Invalid Date");
+    };
+
     // Write header
     outFile << "Channel " << channelName << "\n";
     outFile << "Stats:\n";
@@ -251,7 +262,7 @@ void keyboardInput::writeSummary(const std::string& channelName, const std::stri
     for (const Event& event : filteredEvents) {
         outFile << "Report_" << reportNumber++ << ":\n";
         outFile << "  city: " << event.get_city() << "\n";
-        outFile << "  date time: " << std::to_string(event.get_date_time()) << "\n";
+        outFile << "  date time: " << formatDateTime(event.get_date_time()) << "\n";
         outFile << "  event name: " << event.get_name() << "\n";
         std::string shortenedSummary = shortenText(event.get_description(), 30);
         outFile << "  summary: " << shortenedSummary << "\n";
