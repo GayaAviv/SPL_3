@@ -20,7 +20,7 @@ void KeyboardThread::operator()() {
         if (userInput.rfind("login", 0) == 0) {
             // Initialize the connection handler on login
             std::string connectionDetails = trim(userInput.substr(5)); // Skip "login "
-            frame = keyboardInputInstance.processLogin(connectionDetails, connectionHandler);
+            frame = keyboardInputInstance.processLogin(connectionDetails, protocol, connectionHandler);
 
         } else if (userInput.rfind("report", 0) == 0) {
             std::string filePath = trim(userInput.substr(6)); // Skip "report "

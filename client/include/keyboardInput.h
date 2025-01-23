@@ -10,7 +10,7 @@ class keyboardInput
 {
   public:
      Frame processInput(const std::string& input, StompProtocol& protocol);
-     Frame processLogin(const std::string& loginInput,ConnectionHandler*& connectionHandler);
+     Frame processLogin(const std::string& loginInput, StompProtocol& protocol ,ConnectionHandler*& connectionHandler);
      Frame processJoin(const std::string& joinInput, StompProtocol& protocol);
      Frame processExit(const std::string& exitInput, StompProtocol& protocol);
      std::vector<Frame> processReport(const std::string& reportInput, StompProtocol& protocol);

@@ -15,6 +15,7 @@ private:
     int receipt;
     int disconectedReceipt;
     bool isConnected;
+    std::string user;
     std::unordered_map<int, std::string> exitReceipts; //Map of exit receipt -> channel
     std::unordered_map<int, std::string> subscriptionReceipts; //Map of subscription receipt -> channel
     std::unordered_map<std::string, int> subscriptionAndIDs; //Map of channel -> subscription id
@@ -40,6 +41,8 @@ public:
     void setDisconnectReceipt(int id);
     void setExitReceipt(const std::string& topic, int receipt);
     void setSubscriptionReceipt(const std::string& topic, int receipt);
+    void setUser(std::string newUser);
+    std::string getUser();
 
     void handleConnected(Frame frame);
     void handleMessage(Frame frame);

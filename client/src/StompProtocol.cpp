@@ -4,7 +4,8 @@ std::mutex subscriptionMutex;
 std::mutex receiptMutex;
 std::mutex sentMessagesMutex;
 
-StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
+StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), user(),
+                                 exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
 
 int StompProtocol::getNextSubscriptionID(){
     std::lock_guard<std::mutex> lock(subscriptionMutex);
@@ -37,6 +38,12 @@ void StompProtocol::setExitReceipt(const std::string& topic, int receipt){
 void StompProtocol::setSubscriptionReceipt(const std::string& topic, int receipt){
     std::lock_guard<std::mutex> lock(receiptMutex);
     subscriptionReceipts.insert({ receipt, topic});
+}
+void StompProtocol::setUser(std::string newUser){
+    user = newUser;
+}
+std::string StompProtocol::getUser(){
+    return user;
 }
 
 void StompProtocol::disconnect(){
@@ -91,8 +98,7 @@ void StompProtocol::processFrame(Frame frame){
      const std::string& command = frame.getCommand();
 
     if (command == "CONNECTED") {
-        isConnected  = true;
-        std::cout << "Login successful" << std::endl;
+        handleConnected(frame);
     } else if (command == "MESSAGE") {
         handleMessage(frame);
     } else if (command == "RECEIPT") {
@@ -101,6 +107,11 @@ void StompProtocol::processFrame(Frame frame){
         handleError(frame);
     }
 }
+void StompProtocol::handleConnected(Frame frame){
+    isConnected  = true;
+    std::cout << "Login successful" << std::endl;
+
+}
 
 void StompProtocol::handleMessage(Frame frame){
     // Add the massage to the list
@@ -108,6 +119,7 @@ void StompProtocol::handleMessage(Frame frame){
     Event newEvent(frameBody);
     std::string channel = newEvent.get_channel_name();
     addEvent(channel, newEvent);
+    std::cout << "reported" << std::endl;
     
 }
 void StompProtocol::handleReceipt(Frame frame){
@@ -115,6 +127,7 @@ void StompProtocol::handleReceipt(Frame frame){
     //Only if its the receipt of disconnected we need to do somthing
     if(headers.at("receipt-id") == std::to_string(disconectedReceipt)){
         disconnect();
+        std::cout << "Logged out" << std::endl;
     }
     // If its a exit recipt
     for (const auto& pair : exitReceipts) {

@@ -42,7 +42,7 @@ Frame keyboardInput::processInput(const std::string& input, StompProtocol& proto
     return Frame();
 }
 
-Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandler*& connectionHandler){
+Frame keyboardInput::processLogin(const std::string& loginInput, StompProtocol& protocol, ConnectionHandler*& connectionHandler){
 
     if (loginInput.empty()) {
         std::cerr << "login command need 3 args: {host:port} {username} {password}" << std::endl;
@@ -76,6 +76,7 @@ Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandl
         connectionHandler = nullptr;
         return Frame(); // Return an empty frame
     }
+    protocol.setUser(username);
 
     // If connection is successful, create a CONNECT frame
     Frame frame("CONNECT", {{"accept-version", "1.2"},
@@ -88,7 +89,7 @@ Frame keyboardInput::processLogin(const std::string& loginInput, ConnectionHandl
 
 Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& protocol){
     if(!protocol.getIsConnected()){
-        std::cerr << "join command need 1 args: {channel_name}" << std::endl;
+        std::cerr << "login first" << std::endl;
         return Frame(); // Return an empty frame or handle the error as needed
     }
     if (joinInput.empty()) {
@@ -97,7 +98,7 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
     }
     int id = protocol.getNextSubscriptionID();
     int receipt = protocol.getNextReceipt();
-    Frame frame("SUBSCRIBE", {{"destination" , "/"+ joinInput},
+    Frame frame("SUBSCRIBE", {{"destination" , joinInput},
                               {"id", std::to_string(id)},
                               {"receipt" , std::to_string(receipt)}},
                               "");
@@ -107,6 +108,10 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
 }
 
 Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& protocol){
+    if(!protocol.getIsConnected()){
+        std::cerr << "login first" << std::endl;
+        return Frame(); // Return an empty frame or handle the error as needed
+    }
     if (exitInput.empty()) {
         std::cerr << "exit command need 1 args: {channel_name}" << std::endl;
         return Frame(); // Return an empty frame or handle the error as needed
@@ -123,6 +128,10 @@ Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& pr
 }
 std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, StompProtocol& protocol){
     std::vector<Frame> frames;
+    if(!protocol.getIsConnected()){
+        std::cerr << "login first" << std::endl;
+        return frames; // Return an empty frame or handle the error as needed
+    }
 
     if (reportInput.empty()) {
         std::cerr << "report command need 1 args: {file}" << std::endl;
@@ -133,8 +142,10 @@ std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, 
     names_and_events channel_events = parseEventsFile(reportInput);
     std::string channel = channel_events.channel_name;
     std::vector<Event> events =  channel_events.events;
+    std::string user = protocol.getUser();
     //save each event on the client
     for(Event e : events){
+        e.setEventOwnerUser(user);
         std::string body = "user: " + e.getEventOwnerUser() + "\n" +
                            "city: " + e.get_city() +"\n" +
                            "event name: " + e.get_name() +"\n" +
@@ -155,6 +166,11 @@ std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, 
 }
 
 Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtocol& protocol){
+    if(!protocol.getIsConnected()){
+        std::cerr << "login first" << std::endl;
+        return Frame(); // Return an empty frame or handle the error as needed
+    }
+
     if (summaryInput.empty()) {
         std::cerr << "summary command need 3 args: {channel_name} {user} {file}" << std::endl;
         return Frame(); // Return an empty frame or handle the error as needed
