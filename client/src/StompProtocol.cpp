@@ -1,6 +1,8 @@
 #include "../include/StompProtocol.h"
 
 std::mutex sentMessagesMutex;
+std::mutex subscriptionMutex;
+std::mutex receiptMutex;
 
 StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), user(""),
                                  exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
@@ -12,12 +14,15 @@ int StompProtocol::getNextSubscriptionID(){
     return receipt++;
  }
 void StompProtocol::addSubscribe(const std::string& topic, int id){
+    std::lock_guard<std::mutex> lock(subscriptionMutex);
     subscriptionAndIDs.insert({topic , id});
 }
 void StompProtocol::removeSubscription(const std::string& topic){
+    std::lock_guard<std::mutex> lock(subscriptionMutex);
     subscriptionAndIDs.erase(topic);
 }
 int StompProtocol::getSubscriptionsId(const std::string& topic){
+    std::lock_guard<std::mutex> lock(subscriptionMutex);
     return subscriptionAndIDs.at(topic);
 }
 bool StompProtocol::getIsConnected(){
@@ -25,9 +30,11 @@ bool StompProtocol::getIsConnected(){
 }
 
 void StompProtocol::setExitReceipt(const std::string& topic, int receipt){
+    std::lock_guard<std::mutex> lock(receiptMutex);
     exitReceipts.insert({ receipt, topic});
 }
 void StompProtocol::setSubscriptionReceipt(const std::string& topic, int receipt){
+    std::lock_guard<std::mutex> lock(receiptMutex);
     subscriptionReceipts.insert({ receipt, topic});
 }
 void StompProtocol::setUser(std::string newUser){
@@ -118,6 +125,7 @@ void StompProtocol::handleMessage(Frame frame){
     
     std::string channel = newEvent.get_channel_name();
     addEvent(channel, newEvent);    
+    std::cout << "reported" << std::endl;
 }
 void StompProtocol::handleReceipt(Frame frame){
     std::unordered_map<std::string, std::string> headers = frame.getHeaders();
