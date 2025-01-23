@@ -17,11 +17,13 @@ extern std::atomic<bool> running;
 
 class KeyboardThread {
 private:
+    StompProtocol& protocol;
     keyboardInput& keyboardInputInstance;
+    ConnectionHandler*& connectionHandler;
     std::string trim(const std::string& str);
 
 public:
-    KeyboardThread(keyboardInput& keyboardInput);
+    KeyboardThread(StompProtocol& protocol, keyboardInput& keyboardInput, ConnectionHandler*& connectionHandler);
     void operator()();
 };
 
