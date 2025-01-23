@@ -1,42 +1,32 @@
 #include "../include/StompProtocol.h"
 
-std::mutex subscriptionMutex;
-std::mutex receiptMutex;
-std::mutex sentMessagesMutex;
 
-StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), user(),
+StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), user(""),
                                  exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
 
 int StompProtocol::getNextSubscriptionID(){
-    std::lock_guard<std::mutex> lock(subscriptionMutex);
     return subscriptionId++;
 }
  int StompProtocol::getNextReceipt(){
-    std::lock_guard<std::mutex> lock(receiptMutex);
     return receipt++;
  }
 void StompProtocol::addSubscribe(const std::string& topic, int id){
-    std::lock_guard<std::mutex> lock(subscriptionMutex);
     subscriptionAndIDs.insert({topic , id});
 }
 void StompProtocol::removeSubscription(const std::string& topic){
-    std::lock_guard<std::mutex> lock(subscriptionMutex);
     subscriptionAndIDs.erase(topic);
 }
 int StompProtocol::getSubscriptionsId(const std::string& topic){
-    std::lock_guard<std::mutex> lock(subscriptionMutex);
     return subscriptionAndIDs.at(topic);
 }
 bool StompProtocol::getIsConnected(){
-    return isConnected;
+    return isConnected.load();
 }
 
 void StompProtocol::setExitReceipt(const std::string& topic, int receipt){
-    std::lock_guard<std::mutex> lock(receiptMutex);
     exitReceipts.insert({ receipt, topic});
 }
 void StompProtocol::setSubscriptionReceipt(const std::string& topic, int receipt){
-    std::lock_guard<std::mutex> lock(receiptMutex);
     subscriptionReceipts.insert({ receipt, topic});
 }
 void StompProtocol::setUser(std::string newUser){
@@ -49,15 +39,17 @@ std::string StompProtocol::getUser(){
 void StompProtocol::disconnect(){
     subscriptionId = 0;
     receipt = 0;
+    disconectedReceipt = -1;
     subscriptionAndIDs.clear();
     sentMessages.clear();
     exitReceipts.clear();
     subscriptionReceipts.clear();
     user ="";
-    isConnected = false;
+    isConnected.store(false);
 }
+
 const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::string& channel, const std::string& user) const{
-    std::lock_guard<std::mutex> lock(sentMessagesMutex);
+
     std::vector<Event> filteredEvents;
 
     // Check if the channel exists in the map
@@ -77,7 +69,7 @@ const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::
 }
 
 void StompProtocol::addEvent(std::string channel, Event event){
-    std::lock_guard<std::mutex> lock(sentMessagesMutex);
+
     // Check if the key exists in the map
     if (sentMessages.find(channel) != sentMessages.end()) {
         // If the key exists, insert the event in the correct position in the vector
@@ -111,9 +103,8 @@ void StompProtocol::processFrame(Frame frame){
     }
 }
 void StompProtocol::handleConnected(Frame frame){
-    isConnected  = true;
+    isConnected.store(true);
     std::cout << "Login successful" << std::endl;
-
 }
 
 void StompProtocol::handleMessage(Frame frame){
@@ -129,11 +120,13 @@ void StompProtocol::handleMessage(Frame frame){
 }
 void StompProtocol::handleReceipt(Frame frame){
     std::unordered_map<std::string, std::string> headers = frame.getHeaders();
+
     //Only if its the receipt of disconnected we need to do somthing
     if(headers.at("receipt-id") == std::to_string(disconectedReceipt)){
         disconnect();
         std::cout << "Logged out" << std::endl;
     }
+
     // If its a exit recipt
     for (const auto& pair : exitReceipts) {
         int receipt = pair.first;         // Key (int)
@@ -143,6 +136,7 @@ void StompProtocol::handleReceipt(Frame frame){
             std::cout << "Exited channel " << value << std::endl;
         }
     }
+
     //if its a subscribe receipt
     for (const auto& pair : subscriptionReceipts) {
         int receipt = pair.first;         // Key (int)

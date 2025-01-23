@@ -63,20 +63,8 @@ Frame keyboardInput::processLogin(const std::string& loginInput, StompProtocol& 
     std::string host = hostPort.substr(0, colonPos);
     short port = std::stoi(hostPort.substr(colonPos + 1));
 
-    // Check if already connected
-    if (connectionHandler != nullptr) {
-        std::cerr << "The client is already logged in, log out before trying again." << std::endl;
-        return Frame(); // Return an empty frame
-    }
-
     // Create a new ConnectionHandler
     connectionHandler = new ConnectionHandler(host, port);
-    if (!connectionHandler->connect()) {
-        std::cerr << "Could not connect to server" << std::endl;
-        delete connectionHandler;
-        connectionHandler = nullptr;
-        return Frame(); // Return an empty frame
-    }
     protocol.setUser(username);
 
     // If connection is successful, create a CONNECT frame
@@ -97,12 +85,15 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
         std::cerr << "join command need 1 args: {channel_name}" << std::endl;
         return Frame(); // Return an empty frame or handle the error as needed
     }
+
     int id = protocol.getNextSubscriptionID();
     int receipt = protocol.getNextReceipt();
+
     Frame frame("SUBSCRIBE", {{"destination" , joinInput},
                               {"id", std::to_string(id)},
                               {"receipt" , std::to_string(receipt)}},
                               "");
+                              
     protocol.setSubscriptionReceipt(joinInput, receipt);
     
     return frame;

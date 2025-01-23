@@ -31,7 +31,6 @@ int main() {
 
     // Clean up connection handler if initialized
     if (connectionHandler != nullptr) {
-        connectionHandler->close();
         delete connectionHandler;
     }
 

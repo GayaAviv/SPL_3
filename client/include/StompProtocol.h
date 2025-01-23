@@ -14,7 +14,7 @@ private:
     int subscriptionId;
     int receipt;
     int disconectedReceipt;
-    bool isConnected;
+    std::atomic<bool> isConnected;
     std::string user;
     std::unordered_map<int, std::string> exitReceipts; //Map of exit receipt -> channel
     std::unordered_map<int, std::string> subscriptionReceipts; //Map of subscription receipt -> channel
