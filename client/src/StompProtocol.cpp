@@ -51,6 +51,9 @@ void StompProtocol::disconnect(){
     receipt = 0;
     subscriptionAndIDs.clear();
     sentMessages.clear();
+    exitReceipts.clear();
+    subscriptionReceipts.clear();
+    user ="";
     isConnected = false;
 }
 const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::string& channel, const std::string& user) const{
@@ -114,9 +117,11 @@ void StompProtocol::handleConnected(Frame frame){
 }
 
 void StompProtocol::handleMessage(Frame frame){
+    std::string channle = frame.getHeaders().at("destination");
     // Add the massage to the list
     const std::string frameBody = frame.getBody();
-    Event newEvent(frameBody);
+    Event newEvent(frameBody, channle);
+    
     std::string channel = newEvent.get_channel_name();
     addEvent(channel, newEvent);
     std::cout << "reported" << std::endl;

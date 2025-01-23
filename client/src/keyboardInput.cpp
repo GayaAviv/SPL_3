@@ -146,13 +146,13 @@ std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, 
     //save each event on the client
     for(Event e : events){
         e.setEventOwnerUser(user);
-        std::string body = "user: " + e.getEventOwnerUser() + "\n" +
+        std::string body = "user:" + e.getEventOwnerUser() + "\n" +
                            "city: " + e.get_city() +"\n" +
                            "event name: " + e.get_name() +"\n" +
                            "date time: " + std::to_string(e.get_date_time()) + "\n" +
                            "general information:\n" +
-                                                "  active: " + e.get_general_information().at("active") + "\n" +
-                                                "  forces_arrival_at_scene: " + e.get_general_information().at("forces_arrival_at_scene") +"\n" +
+                                                " active: " + e.get_general_information().at("active") + "\n" +
+                                                " forces_arrival_at_scene: " + e.get_general_information().at("forces_arrival_at_scene") +"\n" +
                             "description:\n" +
                              e.get_description();
 
@@ -178,10 +178,10 @@ Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtoc
 
     // Split the input string to extract parameters
     std::istringstream inputStream(summaryInput);
-    std::string command, channelName, user, fileName;
+    std::string channelName, user, fileName;
 
     // Parse the command and parameters
-    inputStream >> command >> channelName >> user >> fileName;
+    inputStream >> channelName >> user >> fileName;
 
     // Retrieve the events for the given channel and user from the protocol
     const std::vector<Event>& events = protocol.getMessagesForChannelAndUser(channelName, user);
@@ -220,16 +220,23 @@ void keyboardInput::writeSummary(const std::string& channelName, const std::stri
 
             // Count stats
             if (event.get_general_information().count("active") &&
-                event.get_general_information().at("active") == "true") {
+                event.get_general_information().at("active") == " true") {
                 activeCount++;
             }
 
             if (event.get_general_information().count("forces_arrival_at_scene") &&
-                event.get_general_information().at("forces_arrival_at_scene") == "true") {
+                event.get_general_information().at("forces_arrival_at_scene") == " true") {
                 forcesArrivalCount++;
             }
         }
     }
+    // Helper function to shorten strings
+    auto shortenText = [](const std::string& text, size_t maxLength) {
+        if (text.length() > maxLength) {
+            return text.substr(0, maxLength - 3) + "...";
+        }
+        return text;
+    };
 
     // Write header
     outFile << "Channel " << channelName << "\n";
@@ -246,7 +253,8 @@ void keyboardInput::writeSummary(const std::string& channelName, const std::stri
         outFile << "  city: " << event.get_city() << "\n";
         outFile << "  date time: " << std::to_string(event.get_date_time()) << "\n";
         outFile << "  event name: " << event.get_name() << "\n";
-        outFile << "  summary: " << event.get_description() << "\n";
+        std::string shortenedSummary = shortenText(event.get_description(), 30);
+        outFile << "  summary: " << shortenedSummary << "\n";
         outFile << "\n";
     }
 

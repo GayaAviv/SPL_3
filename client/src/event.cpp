@@ -62,7 +62,7 @@ const std::string &Event::get_description() const
     return this->description;
 }
 
-Event::Event(const std::string &frame_body): channel_name(""), city(""), 
+Event::Event(const std::string &frame_body, std::string channle): channel_name(channle), city(""), 
                                              name(""), date_time(0), description(""), general_information(),
                                              eventOwnerUser("")
 {
