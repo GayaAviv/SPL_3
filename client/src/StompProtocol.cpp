@@ -126,12 +126,14 @@ void StompProtocol::handleConnected(Frame frame){
 void StompProtocol::handleMessage(Frame frame){
     std::string fullChannel = frame.getHeaders().at("destination");
     std::string channel = fullChannel.substr(1);
-    // Add the massage to the list
+
+    //Make an event from the message
     const std::string frameBody = frame.getBody();
     Event newEvent(frameBody, channel);
-    
-    std::string channel = newEvent.get_channel_name();
-    addEvent(channel, newEvent);    
+
+    // Add the Event to the list
+    addEvent(channel, newEvent); 
+
     std::cout << "reported" << std::endl;
 }
 void StompProtocol::handleReceipt(Frame frame){
