@@ -30,7 +30,7 @@ void KeyboardThread::operator()() {
             }
         } 
         
-        if(protocol.getIsConnected()){ //In the case of an already established connection 
+        else if(protocol.getIsConnected()){ //In the case of an already established connection 
 
             if(userInput.rfind("report", 0) == 0) {
                 std::string filePath = trim(userInput.substr(6)); // Skip "report "
@@ -46,21 +46,21 @@ void KeyboardThread::operator()() {
             } else {
                 frame = keyboardInputInstance.processInput(userInput, protocol);
             }
-
-            // Add the frame to the queue if it's valid
-            if (!frame.getCommand().empty()) {
-                //std::lock_guard<std::mutex> lock(queueMutex);
-                frameQueue.push(frame);
-                queueCondition.notify_one(); // Notify the communication thread
-            }
         }
 
         else{ //In case no one has made a connection
             std::cerr << "No user logged in, login first!" << std::endl;
         }
-        
+
+        // Add the frame to the queue if it's valid
+        if (!frame.getCommand().empty()) {
+            //std::lock_guard<std::mutex> lock(queueMutex);
+            frameQueue.push(frame);
+            queueCondition.notify_one(); // Notify the communication thread
+        }
     }
 }
+
 std::string KeyboardThread::trim(const std::string& str){
     // Remove leading spaces
     size_t start = str.find_first_not_of(" \t\n\r");
