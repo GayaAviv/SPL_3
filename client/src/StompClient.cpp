@@ -32,7 +32,7 @@ int main() {
 
     
     // Helper function to send frame to the server
-    auto sendFrame = [](Frame frame, EncoderDecoder& encoderDecoder, ConnectionHandler*& connectionHandler) {
+    auto sendFrame = [](Frame& frame, EncoderDecoder& encoderDecoder, ConnectionHandler*& connectionHandler) {
         // Encode the frame to a string
         std::string serializedFrame = encoderDecoder.encode(frame);
 
@@ -45,14 +45,16 @@ int main() {
         return true;
     };
 
+    
 
     try{
         while (running) { //While no one did login or the connection not lost
-            
+  
             if(connectionHandler != nullptr){
                 delete connectionHandler;
             }
             connectionHandler = nullptr;
+            std::thread communicationThreadHandle;
 
             while(true){
 
@@ -94,10 +96,10 @@ int main() {
                         if(connectionHandler->connect()){
                             //Create thread for communication
                             CommunicationThread communicationThread(connectionHandler, protocol, encoderDecoder);
-                            std::thread communicationThreadHandle(communicationThread);
-
+                            communicationThreadHandle = std::thread(&CommunicationThread::operator(), &communicationThread);
                             //Create CONNECT frame
                             frame = keyboardInputInstance.processLogin(username, password, protocol);
+                            protocol.setUser(username);
                         } 
                     }
                 } 
@@ -109,7 +111,7 @@ int main() {
                         std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
                         for(Frame f : frames){
                             if (!f.getCommand().empty()) {
-                                if(!sendFrame(frame, encoderDecoder, connectionHandler)){
+                                if(!sendFrame(f, encoderDecoder, connectionHandler)){
                                     running = false;
                                     break;
                                 }
@@ -131,7 +133,13 @@ int main() {
                 if (!frame.getCommand().empty()) {
                     running = sendFrame(frame, encoderDecoder, connectionHandler);
                 }     
-            }  
+            }
+
+            // Ensure the thread is joined before exiting
+            if (communicationThreadHandle.joinable()) {
+                communicationThreadHandle.join();
+            }
+
         }    
     }
 
