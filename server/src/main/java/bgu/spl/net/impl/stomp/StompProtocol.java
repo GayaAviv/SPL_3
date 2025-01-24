@@ -195,7 +195,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
     private void sendMessageFrame(Frame msg, Integer subscribeID) {
 
         Map<String, String> headers = msg.getHeaders();
-        String topic = headers.get("destination");
+        String topic = headers.get("destination").substring(1);
         String body = msg.getBody();
         String subscriptionId = subscribeID.toString();
 

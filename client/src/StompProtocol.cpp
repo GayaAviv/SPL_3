@@ -87,6 +87,12 @@ void StompProtocol::addEvent(std::string channel, Event event){
 
     std::lock_guard<std::mutex> lock(sentMessagesMutex);
     // Check if the key exists in the map
+    std::cout << "Keys in sentMessages: ";
+    for (const auto& pair : sentMessages) {
+        std::cout << pair.first << " ";
+    }
+    std::cout << std::endl;
+
     if (sentMessages.find(channel) != sentMessages.end()) {
         // If the key exists, insert the event in the correct position in the vector
         auto& events = sentMessages[channel];

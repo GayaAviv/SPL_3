@@ -13,7 +13,6 @@
 
 int main() {
     // Initialize protocol and input handler
-    StompProtocol protocol;
     EncoderDecoder encoderDecoder;
     keyboardInput keyboardInputInstance;
     ConnectionHandler* connectionHandler;
@@ -55,7 +54,8 @@ int main() {
             }
             connectionHandler = nullptr;
             std::thread communicationThreadHandle;
-
+            StompProtocol protocol;
+            
             while(true){
 
                 std::string userInput;
