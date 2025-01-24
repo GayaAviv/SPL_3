@@ -39,41 +39,14 @@ Frame keyboardInput::processInput(const std::string& input, StompProtocol& proto
     return Frame();
 }
 
-Frame keyboardInput::processLogin(const std::string& loginInput, StompProtocol& protocol, ConnectionHandler*& connectionHandler){
-
-    if (loginInput.empty()) {
-        std::cerr << "login command need 3 args: {host:port} {username} {password}" << std::endl;
-        return Frame(); // Return an empty frame or handle the error as needed
-    }
-
-    // Split the input into components: {host:port}, {username}, {password}
-    size_t firstSpace = loginInput.find(' ');
-    size_t secondSpace = loginInput.find(' ', firstSpace + 1);
-
-    std::string hostPort = loginInput.substr(0, firstSpace);
-    std::string username = loginInput.substr(firstSpace + 1, secondSpace - firstSpace - 1);
-    std::string password = loginInput.substr(secondSpace + 1);
-
-    // Extract host and port
-    size_t colonPos = hostPort.find(':');
-    std::string host = hostPort.substr(0, colonPos);
-    short port = std::stoi(hostPort.substr(colonPos + 1));
-
-    // Create a new ConnectionHandler
-    connectionHandler = new ConnectionHandler(host, port);
-    if(connectionHandler->connect()){
-        protocol.setUser(username);
-
-        // If connection is successful, create a CONNECT frame
-        Frame frame("CONNECT", {{"accept-version", "1.2"},
+Frame keyboardInput::processLogin(const std::string& username,const std::string& password, StompProtocol& protocol){
+       
+    Frame frame("CONNECT", {{"accept-version", "1.2"},
                                 {"host", "stomp.cs.bgu.ac.il"},
                                 {"login", username},
                                 {"passcode", password}},
                     "");
-        return frame;
-    }
-
-    return Frame(); //In case of unsuccessful connection
+    return frame;
 }
 
 Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& protocol){
