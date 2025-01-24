@@ -2,8 +2,8 @@ CFLAGS:=-c -Wall -Weffc++ -g -std=c++11 -Iinclude
 LDFLAGS:=-lboost_system -lpthread
 all: StompEMIClient
 
-StompEMIClient: bin/ConnectionHandler.o bin/event.o bin/Frame.o bin/EncoderDecoder.o bin/keyboardInput.o bin/StompProtocol.o bin/Threads.o bin/StompClient.o
-	g++ -o bin/StompEMIClient bin/ConnectionHandler.o bin/event.o bin/Frame.o bin/EncoderDecoder.o bin/keyboardInput.o bin/StompProtocol.o bin/Threads.o bin/StompClient.o $(LDFLAGS)
+StompEMIClient: bin/ConnectionHandler.o bin/event.o bin/Frame.o bin/EncoderDecoder.o bin/keyboardInput.o bin/StompProtocol.o bin/CommunicationThread.o bin/StompClient.o
+	g++ -o bin/StompEMIClient bin/ConnectionHandler.o bin/event.o bin/Frame.o bin/EncoderDecoder.o bin/keyboardInput.o bin/StompProtocol.o bin/CommunicationThread.o bin/StompClient.o $(LDFLAGS)
 
 bin/ConnectionHandler.o: src/ConnectionHandler.cpp include/ConnectionHandler.h
 	g++ $(CFLAGS) -o bin/ConnectionHandler.o src/ConnectionHandler.cpp
@@ -23,10 +23,10 @@ bin/keyboardInput.o: src/keyboardInput.cpp include/keyboardInput.h
 bin/StompProtocol.o: src/StompProtocol.cpp include/StompProtocol.h
 	g++ $(CFLAGS) -o bin/StompProtocol.o src/StompProtocol.cpp
 
-bin/Threads.o: src/Threads.cpp include/Threads.h
-	g++ $(CFLAGS) -o bin/Threads.o src/Threads.cpp
+bin/CommunicationThread.o: src/CommunicationThread.cpp include/CommunicationThread.h
+	g++ $(CFLAGS) -o bin/CommunicationThread.o src/CommunicationThread.cpp
 
-bin/StompClient.o: src/StompClient.cpp include/ConnectionHandler.h include/event.h include/Frame.h include/EncoderDecoder.h include/keyboardInput.h include/StompProtocol.h include/Threads.h
+bin/StompClient.o: src/StompClient.cpp include/ConnectionHandler.h include/event.h include/Frame.h include/EncoderDecoder.h include/keyboardInput.h include/StompProtocol.h include/CommunicationThread.h
 	g++ $(CFLAGS) -o bin/StompClient.o src/StompClient.cpp
 
 .PHONY: clean
