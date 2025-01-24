@@ -101,7 +101,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
     private void handleSubscribe(Frame msg) {
         
         Map<String, String> headers = msg.getHeaders();
-        String topic = headers.get("destination");
+        String topic = headers.get("destination").substring(1);
         String subscribeId = headers.get("id");
         String receiptId = headers.get("receipt");
 
@@ -137,7 +137,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
 
     private void handleSend(Frame msg) {
         Map<String, String> headers = msg.getHeaders();
-        String topic = headers.get("destination");
+        String topic = headers.get("destination").substring(1);
 
         int subscribeID = connections.isSubscribe(topic, connectionId);
         if(subscribeID != -1){
@@ -205,7 +205,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         HashMap<String,String> headerHashMap =  new HashMap<String,String>();
         headerHashMap.put("subscription", subscriptionId);
         headerHashMap.put("message-id", messageIdString);
-        headerHashMap.put("destination", topic);
+        headerHashMap.put("destination", "/"+topic);
 
         Frame msgFrame = new Frame("MESSAGE",headerHashMap,body);
         connections.send(topic, msgFrame);

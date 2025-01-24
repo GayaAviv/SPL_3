@@ -82,6 +82,7 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
         std::cerr << "join command need 1 args: {channel_name}" << std::endl;
         return Frame(); // Return an empty frame or handle the error as needed
     }
+
     if(protocol.isSubscribe(joinInput)){ //In the case of double subscription
         std::cerr << "Already subscribed to this topic. Please try again." << std::endl;
         return Frame(); 
@@ -90,7 +91,7 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
     int id = protocol.getNextSubscriptionID();
     int receipt = protocol.getNextReceipt();
 
-    Frame frame("SUBSCRIBE", {{"destination" , joinInput},
+    Frame frame("SUBSCRIBE", {{"destination" , "/"+joinInput},
                               {"id", std::to_string(id)},
                               {"receipt" , std::to_string(receipt)}},
                               "");
@@ -105,6 +106,11 @@ Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& pr
     if (exitInput.empty()) { //In the case of illegal arguments
         std::cerr << "exit command need 1 args: {channel_name}" << std::endl;
         return Frame();
+    }
+
+    if(!protocol.isSubscribe(exitInput)){ //In the case of no subscription to exit
+        std::cerr << "You are not subscribed to channel " << exitInput << std::endl;
+        return Frame(); 
     }
     
     int id = protocol.getSubscriptionsId(exitInput);
@@ -144,7 +150,7 @@ std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, 
                              e.get_description();
 
         //send frame
-        Frame frame("SEND", {{"destination" , channel}},
+        Frame frame("SEND", {{"destination" , "/"+channel}},
                                 body);
         frames.push_back(frame);
     }

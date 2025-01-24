@@ -71,7 +71,8 @@
         "stop_token": "cpp",
         "cinttypes": "cpp",
         "queue": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "unordered_set": "cpp"
     },
     "makefile.makefilePath": "client/"
 }

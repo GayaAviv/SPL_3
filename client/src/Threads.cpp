@@ -18,22 +18,20 @@ void KeyboardThread::operator()() {
         Frame frame;
 
         if (userInput.rfind("login", 0) == 0) {
-           
             // Check if already connected
             if (connectionHandler != nullptr) {
                 std::cerr << "The client is already logged in, log out before trying again." << std::endl;
                 break;
             }
-
             else{    
                 // Initialize the connection handler on login
                 std::string connectionDetails = trim(userInput.substr(5)); // Skip "login "
                 frame = keyboardInputInstance.processLogin(connectionDetails, protocol, connectionHandler);
             }
-
         } 
         
         if(protocol.getIsConnected()){ //In the case of an already established connection 
+
             if(userInput.rfind("report", 0) == 0) {
                 std::string filePath = trim(userInput.substr(6)); // Skip "report "
                 std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
@@ -44,6 +42,7 @@ void KeyboardThread::operator()() {
                         queueCondition.notify_one(); // Notify the communication thread
                     }
                 }
+
             } else {
                 frame = keyboardInputInstance.processInput(userInput, protocol);
             }
@@ -55,9 +54,11 @@ void KeyboardThread::operator()() {
                 queueCondition.notify_one(); // Notify the communication thread
             }
         }
+
         else{ //In case no one has made a connection
             std::cerr << "No user logged in, login first!" << std::endl;
         }
+        
     }
 }
 std::string KeyboardThread::trim(const std::string& str){
