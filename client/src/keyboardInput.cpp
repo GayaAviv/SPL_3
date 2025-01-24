@@ -61,26 +61,30 @@ Frame keyboardInput::processLogin(const std::string& loginInput, StompProtocol& 
 
     // Create a new ConnectionHandler
     connectionHandler = new ConnectionHandler(host, port);
-    connectionHandler->connect();
-    protocol.setUser(username);
+    if(connectionHandler->connect()){
+        protocol.setUser(username);
 
-    // If connection is successful, create a CONNECT frame
-    Frame frame("CONNECT", {{"accept-version", "1.2"},
-                             {"host", "stomp.cs.bgu.ac.il"},
-                             {"login", username},
-                             {"passcode", password}},
-                "");
-    return frame;
+        // If connection is successful, create a CONNECT frame
+        Frame frame("CONNECT", {{"accept-version", "1.2"},
+                                {"host", "stomp.cs.bgu.ac.il"},
+                                {"login", username},
+                                {"passcode", password}},
+                    "");
+        return frame;
+    }
+
+    return Frame(); //In case of unsuccessful connection
 }
 
 Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& protocol){
-    if(!protocol.getIsConnected()){
-        std::cerr << "login first" << std::endl;
-        return Frame(); // Return an empty frame or handle the error as needed
-    }
-    if (joinInput.empty()) {
+    
+    if (joinInput.empty()) { //In the case of illegal arguments
         std::cerr << "join command need 1 args: {channel_name}" << std::endl;
         return Frame(); // Return an empty frame or handle the error as needed
+    }
+    if(protocol.isSubscribe(joinInput)){ //In the case of double subscription
+        std::cerr << "Already subscribed to this topic. Please try again." << std::endl;
+        return Frame(); 
     }
 
     int id = protocol.getNextSubscriptionID();
@@ -97,14 +101,12 @@ Frame keyboardInput::processJoin(const std::string& joinInput, StompProtocol& pr
 }
 
 Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& protocol){
-    if(!protocol.getIsConnected()){
-        std::cerr << "login first" << std::endl;
-        return Frame(); // Return an empty frame or handle the error as needed
-    }
-    if (exitInput.empty()) {
+
+    if (exitInput.empty()) { //In the case of illegal arguments
         std::cerr << "exit command need 1 args: {channel_name}" << std::endl;
-        return Frame(); // Return an empty frame or handle the error as needed
+        return Frame();
     }
+    
     int id = protocol.getSubscriptionsId(exitInput);
     int receipt = protocol.getNextReceipt();
     Frame frame("UNSUBSCRIBE", {{"id", std::to_string(id)},
@@ -117,12 +119,8 @@ Frame keyboardInput::processExit(const std::string& exitInput, StompProtocol& pr
 }
 std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, StompProtocol& protocol){
     std::vector<Frame> frames;
-    if(!protocol.getIsConnected()){
-        std::cerr << "login first" << std::endl;
-        return frames; // Return an empty frame or handle the error as needed
-    }
 
-    if (reportInput.empty()) {
+    if (reportInput.empty()) { //In the case of illegal arguments
         std::cerr << "report command need 1 args: {file}" << std::endl;
         return frames; // Return an empty frame or handle the error as needed
     }
@@ -155,12 +153,8 @@ std::vector<Frame> keyboardInput::processReport(const std::string& reportInput, 
 }
 
 Frame keyboardInput::processSummary(const std::string& summaryInput, StompProtocol& protocol){
-    if(!protocol.getIsConnected()){
-        std::cerr << "login first" << std::endl;
-        return Frame(); // Return an empty frame or handle the error as needed
-    }
-
-    if (summaryInput.empty()) {
+   
+    if (summaryInput.empty()) { //In the case of illegal arguments
         std::cerr << "summary command need 3 args: {channel_name} {user} {file}" << std::endl;
         return Frame(); // Return an empty frame or handle the error as needed
     }

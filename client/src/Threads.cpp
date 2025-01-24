@@ -31,25 +31,32 @@ void KeyboardThread::operator()() {
                 frame = keyboardInputInstance.processLogin(connectionDetails, protocol, connectionHandler);
             }
 
-        } else if (userInput.rfind("report", 0) == 0 && protocol.getIsConnected()) {
-            std::string filePath = trim(userInput.substr(6)); // Skip "report "
-            std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
-            for(Frame f : frames){
-                if (!f.getCommand().empty()) {
-                    //std::lock_guard<std::mutex> lock(queueMutex);
-                    frameQueue.push(f);
-                    queueCondition.notify_one(); // Notify the communication thread
+        } 
+        
+        if(protocol.getIsConnected()){ //In the case of an already established connection 
+            if(userInput.rfind("report", 0) == 0) {
+                std::string filePath = trim(userInput.substr(6)); // Skip "report "
+                std::vector<Frame> frames = keyboardInputInstance.processReport(filePath, protocol);
+                for(Frame f : frames){
+                    if (!f.getCommand().empty()) {
+                        //std::lock_guard<std::mutex> lock(queueMutex);
+                        frameQueue.push(f);
+                        queueCondition.notify_one(); // Notify the communication thread
+                    }
                 }
+            } else {
+                frame = keyboardInputInstance.processInput(userInput, protocol);
             }
-        } else if (protocol.getIsConnected()) {
-            frame = keyboardInputInstance.processInput(userInput, protocol);
-        }
 
-        // Add the frame to the queue if it's valid
-        if (!frame.getCommand().empty()) {
-            //std::lock_guard<std::mutex> lock(queueMutex);
-            frameQueue.push(frame);
-            queueCondition.notify_one(); // Notify the communication thread
+            // Add the frame to the queue if it's valid
+            if (!frame.getCommand().empty()) {
+                //std::lock_guard<std::mutex> lock(queueMutex);
+                frameQueue.push(frame);
+                queueCondition.notify_one(); // Notify the communication thread
+            }
+        }
+        else{ //In case no one has made a connection
+            std::cerr << "No user logged in, login first!" << std::endl;
         }
     }
 }

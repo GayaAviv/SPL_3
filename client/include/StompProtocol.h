@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <unordered_set>
+
 
 class StompProtocol
 {
@@ -16,6 +18,7 @@ private:
     int disconectedReceipt;
     std::atomic<bool> isConnected;
     std::string user;
+    std::unordered_set<std::string> channels; // Set of subscription channels
     std::unordered_map<int, std::string> exitReceipts; //Map of exit receipt -> channel
     std::unordered_map<int, std::string> subscriptionReceipts; //Map of subscription receipt -> channel
     std::unordered_map<std::string, int> subscriptionAndIDs; //Map of channel -> subscription id
@@ -43,6 +46,7 @@ public:
     void setSubscriptionReceipt(const std::string& topic, int receipt);
     void setUser(std::string newUser);
     std::string getUser();
+    bool isSubscribe(const std::string& topic);
 
     void handleConnected(Frame frame);
     void handleMessage(Frame frame);
