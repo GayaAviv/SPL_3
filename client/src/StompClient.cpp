@@ -136,6 +136,9 @@ int main() {
                 // Send the frame to the server
                 if (!frame.getCommand().empty()) {
                     running = sendFrame(frame, encoderDecoder, connectionHandler);
+                    if(!running){
+                        break;
+                    }
                 }     
             }
         }

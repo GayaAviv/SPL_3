@@ -59,6 +59,7 @@ void StompProtocol::disconnect(){
     sentMessages.clear();
     exitReceipts.clear();
     subscriptionReceipts.clear();
+    channels.clear();
     user ="";
     isConnected.store(false);
 }
