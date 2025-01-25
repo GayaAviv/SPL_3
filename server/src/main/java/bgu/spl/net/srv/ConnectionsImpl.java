@@ -61,7 +61,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
      */
     @Override
     public void disconnect(int connectionId){
-        connectionHandlers.remove(connectionId); //Remove from the client-connectionId data.
+
         for (List<Subscriber> subscribers : topicSubscribers.values()) { // Remove the client from all the channels they are subscribed to.
             for (Subscriber s : subscribers) {
                 if(s.getConnectionId() == connectionId){
@@ -134,6 +134,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
             }
         }
         return -1;
+    }
+
+    public void removeCH(int connectionId) {
+        connectionHandlers.remove(connectionId);
     }
 
     public Map<Integer,ConnectionHandler<T>> getConnectionHandlers(){

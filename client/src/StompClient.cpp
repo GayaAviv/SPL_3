@@ -48,7 +48,7 @@ int main() {
     
 
     try{
-        while (running) { //While no one did login or the connection not lost
+        while (running) { 
   
             if(connectionHandler != nullptr){
                 delete connectionHandler;
@@ -68,7 +68,6 @@ int main() {
                     // Check if already connected
                     if (protocol.getUser() != "") {
                         std::cerr << "The client is already logged in, log out before trying again." << std::endl;
-                        break;
                     }
                     else{ // Initialize the connection handler and thread communiction on login
                         
@@ -92,16 +91,21 @@ int main() {
                         std::string host = hostPort.substr(0, colonPos);
                         short port = std::stoi(hostPort.substr(colonPos + 1));
 
-                        // Create a new ConnectionHandler and connect
-                        connectionHandler = new ConnectionHandler(host, port);
-                        if(connectionHandler->connect()){
-                            //Create thread for communication
-                            communicationThread.setConnectionHandler(connectionHandler);
-                            communicationThreadHandle = std::thread(&CommunicationThread::operator(), &communicationThread);
+                        if(connectionHandler == nullptr){
+                            // Create a new ConnectionHandler and connect
+                            connectionHandler = new ConnectionHandler(host, port);
+                            if(connectionHandler->connect()){
+                                //Create new thread for communication
+                                communicationThread.setConnectionHandler(connectionHandler);
+                                communicationThreadHandle = std::thread(&CommunicationThread::operator(), &communicationThread);
+                            } 
+                        }
+
+                        if(connectionHandler->isConnected()){
                             //Create CONNECT frame
                             frame = keyboardInputInstance.processLogin(username, password, protocol);
                             protocol.setUser(username);
-                        } 
+                        }
                     }
                 } 
                 
@@ -135,13 +139,7 @@ int main() {
                     running = sendFrame(frame, encoderDecoder, connectionHandler);
                 }     
             }
-
-            // Ensure the thread is joined before exiting
-            if (communicationThreadHandle.joinable()) {
-                communicationThreadHandle.join();
-            }
-
-        }    
+        }
     }
 
     catch (const std::exception& e){

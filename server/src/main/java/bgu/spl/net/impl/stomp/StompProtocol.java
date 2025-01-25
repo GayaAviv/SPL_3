@@ -132,7 +132,6 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
 
         sendReceiptFrame(receiptId);
         connections.disconnect(connectionId);
-        shouldTerminate = true;
     }
 
     private void handleSend(Frame msg) {
@@ -175,6 +174,7 @@ public class StompProtocol<T> implements StompMessagingProtocol<Frame> {
         if(connections.send(connectionId, errorFrame)){
             shouldTerminate = true;
             connections.disconnect(connectionId);
+            connections.removeCH(connectionId);
         }
     }
 

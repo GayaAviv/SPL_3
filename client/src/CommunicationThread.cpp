@@ -33,8 +33,5 @@ void CommunicationThread::operator()() {
             connectionHandler->close();
             running = false;
         }
-        else if(!protocol.getIsConnected()){
-            running = false;
-        }
     }
 }
