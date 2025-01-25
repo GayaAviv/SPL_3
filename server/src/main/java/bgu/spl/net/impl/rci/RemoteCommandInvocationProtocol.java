@@ -16,7 +16,8 @@ public class RemoteCommandInvocationProtocol<T> implements MessagingProtocol<Ser
     @Override
     public void process(Serializable msg) {
         //return ((Command<T>) msg).execute(arg);
-        ((Command<T>) msg).execute(arg);
+        //((Command<T>) msg).execute(arg);
+        System.out.println(arg);;
     }
 
     @Override

@@ -75,7 +75,6 @@ int main() {
 
                         if (connectionDetails.empty()) {
                             std::cerr << "login command need 3 args: {host:port} {username} {password}" << std::endl;
-                            break;
                         }
 
                         // Split the input into components: {host:port}, {username}, {password}

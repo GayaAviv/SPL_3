@@ -30,7 +30,7 @@ void CommunicationThread::operator()() {
         // Process the decoded frame using StompProtocol
         protocol.processFrame(frame);
         if(frame.getCommand() == "ERROR"){
-            connectionHandler->close();
+            //connectionHandler->close();
             running = false;
         }
     }
