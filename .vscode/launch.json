@@ -10,8 +10,7 @@
             "name": "Launch StompServer",
             "request": "launch",
             "mainClass": "bgu.spl.net.impl.stomp.StompServer",
-            "projectName": "server",
-            "args": "7777 reactor"
+            "projectName": "server"
         },
         {
             "type": "java",
