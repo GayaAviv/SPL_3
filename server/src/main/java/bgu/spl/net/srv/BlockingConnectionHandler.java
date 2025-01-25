@@ -38,12 +38,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             }
         } 
         catch (IOException ex) {
-            //ex.printStackTrace();
-            System.out.println("The connection with the client lost.");
-            try{
-                close();
-            }
-            catch(IOException e){}
+            ex.printStackTrace();
         }
 
     }
