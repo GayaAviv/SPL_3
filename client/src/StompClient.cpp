@@ -66,7 +66,7 @@ int main() {
 
                 if (userInput.rfind("login", 0) == 0) {
                     // Check if already connected
-                    if (connectionHandler != nullptr) {
+                    if (protocol.getUser() != "") {
                         std::cerr << "The client is already logged in, log out before trying again." << std::endl;
                         break;
                     }
