@@ -16,7 +16,7 @@ int main() {
     EncoderDecoder encoderDecoder;
     StompProtocol protocol;
     keyboardInput keyboardInputInstance;
-    ConnectionHandler* connectionHandler;
+    ConnectionHandler* connectionHandler = nullptr;
     bool running(true);
 
     // Helper function to remove spaces strings
@@ -55,6 +55,7 @@ int main() {
             }
             connectionHandler = nullptr;
             std::thread communicationThreadHandle;
+            CommunicationThread communicationThread (protocol, encoderDecoder);
             
             while(true){
 
@@ -95,7 +96,7 @@ int main() {
                         connectionHandler = new ConnectionHandler(host, port);
                         if(connectionHandler->connect()){
                             //Create thread for communication
-                            CommunicationThread communicationThread(connectionHandler, protocol, encoderDecoder);
+                            communicationThread.setConnectionHandler(connectionHandler);
                             communicationThreadHandle = std::thread(&CommunicationThread::operator(), &communicationThread);
                             //Create CONNECT frame
                             frame = keyboardInputInstance.processLogin(username, password, protocol);

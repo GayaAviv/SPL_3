@@ -2,8 +2,13 @@
 
 bool running(true);
 
-CommunicationThread::CommunicationThread(ConnectionHandler*& connectionHandler, StompProtocol& protocol, EncoderDecoder& encoderDecoder)
-    : connectionHandler(connectionHandler), protocol(protocol), encoderDecoder(encoderDecoder) {}
+
+CommunicationThread::CommunicationThread( StompProtocol& protocol, EncoderDecoder& encoderDecoder)
+    : connectionHandler(nullptr), protocol(protocol), encoderDecoder(encoderDecoder) {}
+
+void CommunicationThread::setConnectionHandler(ConnectionHandler* handler) {
+        connectionHandler = handler;
+    }
 
 void CommunicationThread::operator()() {
     while (running) { 

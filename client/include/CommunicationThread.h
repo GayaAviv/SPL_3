@@ -11,11 +11,13 @@
 
 class CommunicationThread {
     private:
-    ConnectionHandler*& connectionHandler;
+    ConnectionHandler* connectionHandler;
     StompProtocol& protocol;
     EncoderDecoder& encoderDecoder;
     
 public:
-    CommunicationThread(ConnectionHandler*& connectionHandler, StompProtocol& protocol, EncoderDecoder& encoderDecoder);
+    
+    CommunicationThread(StompProtocol& protocol, EncoderDecoder& encoderDecoder);
+    void setConnectionHandler(ConnectionHandler* handler);
     void operator()();
 };

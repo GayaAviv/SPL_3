@@ -5,7 +5,7 @@ std::mutex subscriptionMutex;
 std::mutex receiptMutex;
 
 StompProtocol:: StompProtocol() : subscriptionId (0), receipt(0), disconectedReceipt(-1), isConnected(false), user(""),
-                                 exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages(),channels() {}
+                                  channels(), exitReceipts(), subscriptionReceipts(), subscriptionAndIDs(), sentMessages() {}
 
 int StompProtocol::getNextSubscriptionID(){
     return subscriptionId++;
@@ -86,7 +86,8 @@ const std::vector<Event> StompProtocol::getMessagesForChannelAndUser(const std::
 void StompProtocol::addEvent(std::string channel, Event event){
 
     std::lock_guard<std::mutex> lock(sentMessagesMutex);
-    
+
+    //if (sentMessages.count(channel) > 0){
     if (sentMessages.find(channel) != sentMessages.end()) {
         // If the key exists, insert the event in the correct position in the vector
         auto& events = sentMessages[channel];
@@ -95,6 +96,7 @@ void StompProtocol::addEvent(std::string channel, Event event){
                                        return a.get_date_time() < b.get_date_time();
                                    });
         events.insert(it, event);
+    
     } else {
         // If the key does not exist, create a new vector and add the event
         sentMessages[channel] = std::vector<Event>{event};
